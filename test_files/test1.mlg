@@ -1,0 +1,53 @@
+let is_prime = | int num :
+  2..(num-1) &&& | int factor : 
+    num % factor != 0
+
+7 is_prime assert
+
+// [2, 3, 5, 7, 11, 13] &&& is_prime
+
+////////////////
+
+let th_fibonacci = | int num :
+  let prev = 0
+  let curr = 1
+  0..num $ | ignored :
+    let temp = prev
+    prev = curr
+    curr = temp + curr
+  return curr
+
+0..10 $ | num : 
+  num th_fibonacci print
+
+2..100 # | num :
+  |~ num is_prime : true
+  |~ true : false
+
+////////////////
+
+// let reversed = | arr :
+//   let mut reversed = [Type]::new
+// 
+//   0..arr.length $ | index :
+//     reversed[index] = arr[arr.length - index]
+// 
+//   reversed
+// 
+// [1 2 3] reversed == [3 2 1]
+
+////////////////
+
+// Special function notation
+// After semicolon comes postargs
+
+// let divides = | int divisor; int dividend :
+//   dividend % divisor == 0
+//
+// assert!(2 divides 4)
+
+///////////////
+
+// Anything un-pure like IO or mutating inputs is
+// only possible if the function is annotated 
+// with an exclamation mark

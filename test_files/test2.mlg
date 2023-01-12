@@ -1,0 +1,6 @@
+let is_prime = 
+  | num ~ num < 2 : false
+  | num : 2..(num - 1) &&& 
+    | factor : num % factor != 0
+
+((0..100 # is_prime) @ | p : p * p) $ print
