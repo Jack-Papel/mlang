@@ -27,11 +27,10 @@ num = num + 1    // No += operator yet :(
 ### Match statements
 ```
 let obj = // Something
-obj
-  | int i : 
-    // code block
-  | float f : // Alternatively, you can do it inline
-  | int i ~ i % 2 == 0 : // Match guard
+obj | int i : 
+      // code block
+    | float f : // Alternatively, you can do it inline
+    | int i ~ i % 2 == 0 : // Match guard
 ```
 #### Match statements as objects
 ```
@@ -50,6 +49,7 @@ let is_even = | num :
 ### If statements
 ```
 let num = 0
+
 |~ num % 2 == 0 : // Basically a match statement without a match pattern
 |~ num % 3 == 0 : // Else if
 |~ : // Else
@@ -86,9 +86,8 @@ let is_prime = | int num :
 let squared = | i : i * i
 
 2..100 # is_prime 
-  @ squared 
-  $ print
-// (Expressions continue if the next line is indented)
+       @ squared 
+       $ print
 ```
 
 It's quite a bit of syntax, for sure. It's a fun way to learn to make a language though.
