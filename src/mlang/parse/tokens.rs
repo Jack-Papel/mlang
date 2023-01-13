@@ -1,7 +1,7 @@
 use crate::mlang::ast::{BinaryOperator, UnaryOperator};
 use crate::prelude::*;
 
-#[allow(non_camel_case_types, unused)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms, unused)]
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -16,6 +16,9 @@ pub enum Token {
     DOLLAR, AT, HASH, 
     TRIPLE_AMP, TRIPLE_BAR,
     DOT_DOT,
+
+    // Reserved, but unused, tokens
+    AMP, CARET, QUESTION,
 
     // One or two character tokens.
     EXCLAMATION, EXCLAMATION_EQUAL,

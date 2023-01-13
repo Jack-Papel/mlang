@@ -69,15 +69,13 @@ impl<'a> Env<'a> {
     pub fn print(&mut self, text: String) -> Result<()> {
         if let Some(output) = &mut self.output {
             output.push_str(&text);
-        } else {
-            if let Some(parent) = self.parent {
-                unsafe {
-                    let ptr = parent as *const Env as *mut Env;
-                    (*ptr).print(text)?;
-                }
-            } else {
-                return exec_err!("No output stream found");
+        } else if let Some(parent) = self.parent {
+            unsafe {
+                let ptr = parent as *const Env as *mut Env;
+                (*ptr).print(text)?;
             }
+        } else {
+            return exec_err!("No output stream found");
         }
         Ok(())
     }
@@ -85,10 +83,8 @@ impl<'a> Env<'a> {
     pub fn write_to_string(&self, output: &mut String) {
         if let Some(output_str) = &self.output {
             output.push_str(output_str);
-        } else {
-            if let Some(parent) = self.parent {
-                parent.write_to_string(output);
-            }
+        } else if let Some(parent) = self.parent {
+            parent.write_to_string(output);
         }
     }
 
@@ -113,7 +109,7 @@ impl Executable for Expression {
                         arm.pattern.identifier.is_none()
                     }) {
                         for arm in arms {
-                            if matches(&Value::None, &arm, env)? {
+                            if matches(&Value::None, arm, env)? {
                                 return arm.block.execute(env);
                             }
                         }
@@ -127,8 +123,8 @@ impl Executable for Expression {
                 env.get_ident(identifier.name.clone()).map(|v| v.clone())
             }
             Expression::Binary(left, operator, right) => {
-                let left = left.execute(env)?.clone();
-                let right = right.execute(env)?.clone();
+                let left = left.execute(env)?;
+                let right = right.execute(env)?;
 
                 match operator {
                     BinaryOperator::PLUS => {
@@ -168,7 +164,7 @@ impl Executable for Expression {
                     }
                     BinaryOperator::FOR_EACH => {
                         if let func @ Value::Function(_) = right {
-                            if let Some(mut iter) = left.iter()? {
+                            if let Some(mut iter) = left.iter() {
                                 while let Some(val) = iter.next(env)? {
                                     Expression::Call(
                                         Box::from(Expression::Literal(val)), 
@@ -271,7 +267,7 @@ impl Executable for Expression {
                         }
                     }
                     BinaryOperator::ALL => {
-                        if let Some(mut iter) = left.iter()? {
+                        if let Some(mut iter) = left.iter() {
                             while let Some(val) = iter.next(env)? {
                                 if let Value::Boolean(bl) = Expression::Call(
                                     Box::from(Expression::Literal(val.clone())), 
@@ -290,7 +286,7 @@ impl Executable for Expression {
                         }
                     }
                     BinaryOperator::ANY => {
-                        if let Some(mut iter) = left.iter()? {
+                        if let Some(mut iter) = left.iter() {
                             while let Some(val) = iter.next(env)? {
                                 if let Value::Boolean(bl) = Expression::Call(
                                     Box::from(Expression::Literal(val.clone())), 
@@ -354,7 +350,7 @@ fn get_result_from_match(value: &Value, arms: &Vec<MatchArm>, env: &mut Env) -> 
     for arm in arms {
         let mut inner_env = env.new_child();
 
-        if matches(value, &arm, &mut inner_env)? {
+        if matches(value, arm, &mut inner_env)? {
             let result = arm.block.execute(&mut inner_env);
             // This is kinda hacky, but it works. Probably.
             if inner_env.break_flag {
@@ -369,8 +365,8 @@ fn get_result_from_match(value: &Value, arms: &Vec<MatchArm>, env: &mut Env) -> 
 
 fn matches(value: &Value, arm: &MatchArm, inner_env: &mut Env) -> Result<bool> {
     // Match pattern
-    if let Some(ref ident) = arm.pattern.identifier {
-        if let Some(ref typ) = arm.pattern.typ {
+    if let Some(ident) = &arm.pattern.identifier {
+        if let Some(typ) = &arm.pattern.typ {
             if *typ != value.get_type() {
                 return Ok(false);
             }
@@ -380,14 +376,14 @@ fn matches(value: &Value, arm: &MatchArm, inner_env: &mut Env) -> Result<bool> {
     }
 
     // Match guard
-    if let Some(ref guard) = arm.pattern.guard {
+    if let Some(guard) = &arm.pattern.guard {
         match guard.execute(inner_env)? {
             Value::Boolean(b) => return Ok(b),
             o => return exec_err!("Guard must return a boolean. Got: {}", o),
         }
     }
 
-    return Ok(true);
+    Ok(true)
 }
 
 impl Executable for Block {

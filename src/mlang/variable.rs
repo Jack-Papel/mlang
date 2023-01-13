@@ -28,10 +28,9 @@ impl Type {
             "tuple" => Some(Type::Tuple(Vec::new())),
             "none" => Some(Type::None),
             s => {
-                if let Some('[') = s.chars().next() {
-                    if let Some(']') = s.chars().last() {
-                        return Some(Type::List(Box::new(Type::from_id(&s[1..s.len() - 1])?)));
-                    }
+                let mut chars = s.chars();
+                if let Some(('[', ']')) = Option::zip(chars.next(), chars.last()) {
+                    return Some(Type::List(Box::new(Type::from_id(&s[1..s.len() - 1])?)));
                 }
                 None
             },
@@ -55,41 +54,37 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn iter<'a>(&'a self) -> Result<Option<Box<dyn MLGIter + 'a>>> {
+    pub fn iter<'a>(&'a self) -> Option<Box<dyn MLGIter + 'a>> {
         match self {
-            Value::String(s) => Ok(Some(Box::from(CharIter {
+            Value::String(s) => Some(Box::from(CharIter {
                 index: 0,
                 string: s.clone()
-            }))),
-            Value::IntRange(b, e) => Ok(Some(Box::from(RangeIter {
+            })),
+            Value::IntRange(b, e) => Some(Box::from(RangeIter {
                 current: *b,
                 end: *e
-            }))),
-            Value::List(l) => Ok(Some(Box::from(ListIter {
+            })),
+            Value::List(l) => Some(Box::from(ListIter {
                 index: 0,
                 list: l
-            }))),
+            })),
             Value::Filter(val, mat) => {
-                if let Some(iter) = val.iter()? {
-                    Ok(Some(Box::from(FilterIter {
+                val.iter().map(|iter| {
+                    Box::from(FilterIter {
                         iter,
                         func: mat.clone()
-                    })))
-                } else {
-                    Ok(None)
-                }
+                    }) as Box<dyn MLGIter>
+                })
             }
             Value::Map(val, mat) => {
-                if let Some(iter) = val.iter()? {
-                    Ok(Some(Box::from(MapIter {
+                val.iter().map(|iter| {
+                    Box::from(MapIter {
                         iter,
                         func: mat.clone()
-                    })))
-                } else {
-                    Ok(None)
-                }
+                    }) as Box<dyn MLGIter>
+                })
             }
-            _ => Ok(None),
+            _ => None,
         }
     }
 }
@@ -109,6 +104,7 @@ impl Builtin {
                 Ok(Value::None)
             }
             Self::Assert => {
+                // TODO: Break execution and print error, rather than use rust's assert
                 match value {
                     Value::Boolean(b) => {
                         assert!(b)

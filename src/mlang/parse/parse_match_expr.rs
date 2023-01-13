@@ -19,10 +19,7 @@ pub fn parse_match_expression(token_queue: &mut TokenQueue, current_indent: usiz
 
         token_queue.next(); // Skip the BAR
         if let Some((idx, token)) = token_queue.clone().enumerate().find(|(_, token)| {
-            match token {
-                Token::COLON => true,
-                _ => false,
-            }
+            matches!(token, Token::COLON)
         }) {
             if idx > end {
                 return parse_err!("Expected colon after match pattern");
@@ -34,10 +31,9 @@ pub fn parse_match_expression(token_queue: &mut TokenQueue, current_indent: usiz
 
         token_queue.next(); // Skip the COLON
 
-        let body = if let Some(Token::NEWLINE(_)) = token_queue.peek() {
+        let block = if let Some(Token::NEWLINE(_)) = token_queue.peek() {
             token_queue.next();
-            let result = parse_block(token_queue, current_indent + 1)?;
-            result
+            parse_block(token_queue, current_indent + 1)?
         } else {
             Block{
                 statements: vec!(parse_next_statement(token_queue, current_indent)?)
@@ -46,37 +42,34 @@ pub fn parse_match_expression(token_queue: &mut TokenQueue, current_indent: usiz
         token_queue.next(); // Skip the NEWLINE
 
         arms.push(MatchArm {
-            pattern: pattern,
-            block: body,
+            pattern,
+            block,
         });
     }
     
     Ok(Expression::Literal(Value::Function(Function::Match {
-        arms: arms,
+        arms,
     })))
 }
 
 fn parse_pattern(token_queue: &mut TokenQueue) -> Result<Pattern> {
     if let Some((idx, _)) = token_queue.clone().enumerate().find(|(_, token)| {
-        match token {
-            Token::TILDE => true,
-            _ => false,
-        }
+        matches!(token, Token::TILDE)
     }) {
-        let mut ident = None;
+        let mut identifier = None;
         let mut typ = None;
 
         if idx != 0 {
             let pattern = parse_pattern(&mut token_queue.take(idx))?;
-            ident = pattern.identifier;
+            identifier = pattern.identifier;
             typ = pattern.typ;
         }
 
         token_queue.next(); // Skip the TILDE
 
         Ok(Pattern {
-            identifier: ident,
-            typ: typ,
+            identifier,
+            typ,
             guard: Some(parse_next_expression(token_queue, 0)?),
         })
     } else {
@@ -85,32 +78,32 @@ fn parse_pattern(token_queue: &mut TokenQueue) -> Result<Pattern> {
             if let Expression::Identifier(id) = parse_single_token(first)? {
                 if let Some(second) = token_queue.next() {
                     if let Expression::Identifier(ident) = parse_single_token(second)? {
-                        return Ok(Pattern {
+                        Ok(Pattern {
                             identifier: Some(ident),
                             typ: Some(Type::from_id(&id.name).unwrap()),
                             guard: None
-                        });
+                        })
                     } else {
-                        return parse_err!("Expected identifier after type");
+                        parse_err!("Expected identifier after type")
                     }
                 } else {
-                    return Ok(Pattern {
+                    Ok(Pattern {
                         identifier: Some(id),
                         typ: None,
                         guard: None
-                    });
+                    })
                 }
             } else {
-                return parse_err!("Expected identifier");
+                parse_err!("Expected identifier")
             }
         } else {
-            return Ok(
+            Ok(
                 Pattern {
                     identifier: None,
                     typ: None,
                     guard: None
                 }
-            );
+            )
         }
     }
 }

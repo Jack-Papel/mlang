@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Read;
 
 use mlang::prelude::*;
-use mlang::mlang::program::Program;
+use mlang::program::Program;
 
 fn main() -> Result<()> {
     let mut source = File::open("test_files/test2.mlg").unwrap();

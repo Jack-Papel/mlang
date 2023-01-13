@@ -32,10 +32,7 @@ pub fn parse_next_expression(token_queue: &mut TokenQueue, current_indent: usize
     evaluate_fragments_on_match_statements(&mut atoms, current_indent)?;
 
     // Remove whitespace - it messes up the parsing
-    atoms.retain(|atom| match atom {
-        ExpressionFragment::Unparsed(Token::NEWLINE(_)) => false,
-        _ => true,
-    });
+    atoms.retain(|atom| !matches!(atom, ExpressionFragment::Unparsed(Token::NEWLINE(_))));
     // Try to parse any singular parsable tokens.
     // This will make our life easier when doing calls
     for atom in atoms.iter_mut() {
@@ -52,13 +49,13 @@ pub fn parse_next_expression(token_queue: &mut TokenQueue, current_indent: usize
 
     evaluate_fragments_on_binary_operators(&mut atoms)?;
 
-    if atoms.len() == 0 {
+    if atoms.is_empty() {
         // () = none. This will make sense once tuples are added
         Ok(Expression::Literal(Value::None))
     } else if atoms.len() == 1 {
         match &atoms[0] {
             ExpressionFragment::Parsed(expr) => Ok(expr.clone()),
-            ExpressionFragment::Unparsed(token) => parse_single_token(&token),
+            ExpressionFragment::Unparsed(token) => parse_single_token(token),
         }
     } else {
         parse_err!("Failed to parse into singular expression. Got: {:?}", atoms)
@@ -87,12 +84,9 @@ fn find_end_of_expression(token_queue: &mut TokenQueue, env_indent: usize) -> us
 
 fn evaluate_fragments_on_match_statements(atoms: &mut Vec<ExpressionFragment>, current_indent: usize) -> Result<()> {
     // First, find if there is a BAR token, and if so, evaluate the rest of the tokens into a match expression
-    if let Some((idx, _)) = atoms.iter().enumerate().find(|(_, partial)| {
-        match partial {
-            ExpressionFragment::Unparsed(Token::BAR) => true,
-            _ => false,
-        }
-    }) {
+    if let Some((idx, _)) = atoms.iter().enumerate().find(|(_, partial)|
+        matches!(partial, ExpressionFragment::Unparsed(Token::BAR))
+    ) {
         let match_block = parse_match_expression(&mut TokenQueue::new( 
             &atoms.iter().skip(idx).map(|partial| {
                 match partial {
@@ -123,11 +117,7 @@ fn evaluate_fragments_in_parentheses(atoms: &mut Vec<ExpressionFragment>, curren
                 false
             },
             ExpressionFragment::Unparsed(Token::BAR) => {
-                if depth == 0 {
-                    true
-                } else {
-                    false
-                }
+                depth == 0
             },
             _ => false,
         }
@@ -201,7 +191,7 @@ fn evaluate_fragments_on_binary_operators(atoms: &mut Vec<ExpressionFragment>) -
                     }
                 }
             }
-            return false;
+            false
         }) {
             let (left, right) = get_binary_operands(atoms, op_idx)?;
             let op = token.as_binary_operator()?;
@@ -218,20 +208,20 @@ fn evaluate_fragments_on_binary_operators(atoms: &mut Vec<ExpressionFragment>) -
 }
 
 
-fn get_binary_operands(atoms: &Vec<ExpressionFragment>, idx: usize) -> Result<(Expression, Expression)> {
+fn get_binary_operands(atoms: &[ExpressionFragment], idx: usize) -> Result<(Expression, Expression)> {
     let left = match &atoms.get(idx - 1) {
         Some(ExpressionFragment::Parsed(expr)) => expr.clone(),
         Some(ExpressionFragment::Unparsed(token)) => parse_single_token(token)?,
-        None => return parse_err!("Expected expression before binary operator"),
+        None => return parse_err!("Expected expression before binary operator {:?}", atoms[idx]),
     };
 
     let right = match &atoms.get(idx + 1) {
         Some(ExpressionFragment::Parsed(expr)) => expr.clone(),
         Some(ExpressionFragment::Unparsed(token)) => parse_single_token(token)?,
-        None => return parse_err!("Expected expression after binary operator"),
+        None => return parse_err!("Expected expression after binary operator {:?}", atoms[idx]),
     };
 
-    return Ok((left, right));
+    Ok((left, right))
 }
 
 #[allow(unused_variables)]
@@ -240,10 +230,7 @@ fn evaluate_fragments_on_calls(atoms: &mut Vec<ExpressionFragment>) -> Result<()
                 ExpressionFragment::Parsed(expr1), 
                 ExpressionFragment::Parsed(expr2)
         ])) = atoms.windows(2).enumerate().find(|(_, frags)| {
-        match (&frags[0], &frags[1]) {
-            (ExpressionFragment::Parsed(_), ExpressionFragment::Parsed(_)) => true,
-            _ => false,
-        }
+        matches!((&frags[0], &frags[1]), (ExpressionFragment::Parsed(_), ExpressionFragment::Parsed(_)))
     }) {
         let call = Expression::Call(Box::from(expr1.clone()), Box::from(expr2.clone()));
         atoms[idx] = ExpressionFragment::Parsed(call);

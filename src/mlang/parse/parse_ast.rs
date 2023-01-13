@@ -44,11 +44,11 @@ pub fn parse_block(token_queue: &mut TokenQueue, block_indent: usize) -> Result<
         statements.push(parse_next_statement(&mut token_queue, block_indent)?);
     }
 
-    if statements.len() == 0 {
+    if statements.is_empty() {
         return parse_err!("Expected block");
     }
 
-    Ok(Block { statements: statements })
+    Ok(Block { statements })
 }
 
 pub fn parse_next_statement(token_queue: &mut TokenQueue, current_indent: usize) -> Result<Statement> {

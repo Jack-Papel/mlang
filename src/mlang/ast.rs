@@ -7,7 +7,7 @@ pub struct Identifier {
     pub name: String,
 }
 
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum BinaryOperator {
     RANGE,
@@ -48,6 +48,7 @@ impl BinaryOperator {
     }
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Debug, Clone)]
 pub enum UnaryOperator {
     MINUS,

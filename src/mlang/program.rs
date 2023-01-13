@@ -1,6 +1,6 @@
 use super::ast::Block;
 use super::interpret::execution::{Executable, Env};
-use super::parse::parse;
+use super::parse;
 use crate::prelude::*;
 
 #[derive(Debug, Clone)]
