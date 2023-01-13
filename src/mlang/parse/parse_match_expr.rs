@@ -17,7 +17,14 @@ pub fn parse_match_expression(token_queue: &mut TokenQueue, current_indent: usiz
         }
         let pattern;
 
-        token_queue.next(); // Skip the BAR
+        if let Some(Token::BAR(indent)) = token_queue.next() {
+            if *indent != current_indent {
+                return parse_err!("Expected match arm to be indented");
+            }
+        } else {
+            return parse_err!("Tried to parse match arm without bar. Instead, got: {:?}", token_queue.peek());
+        }
+
         if let Some((idx, token)) = token_queue.clone().enumerate().find(|(_, token)| {
             matches!(token, Token::COLON)
         }) {

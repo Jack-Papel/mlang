@@ -9,5 +9,5 @@ use crate::prelude::*;
 use crate::mlang::program::Program;
 
 pub fn parse(source: String) -> Result<Program> {
-    parse_ast::to_ast(parse_tokens::tokenize(&source))
+    parse_ast::to_ast(parse_tokens::tokenize(&source)?)
 }

@@ -12,7 +12,7 @@ pub enum Token {
     PERCENT,
 
     // Iteration/Match-related tokens
-    BAR, COLON, TILDE, 
+    BAR(/*index:*/ usize), COLON, TILDE, 
     DOLLAR, AT, HASH, 
     TRIPLE_AMP, TRIPLE_BAR,
     DOT_DOT,

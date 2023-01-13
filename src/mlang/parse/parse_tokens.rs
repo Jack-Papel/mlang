@@ -1,4 +1,5 @@
 use super::tokens::Token;
+use crate::prelude::*;
 
 enum Parsing {
     Tokens,
@@ -9,7 +10,7 @@ enum Parsing {
     Identifier,
 }
 
-pub fn tokenize(mlg_str: &str) -> Vec<Token> {
+pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
     let mut chars = mlg_str.chars().peekable();
 
@@ -22,12 +23,16 @@ pub fn tokenize(mlg_str: &str) -> Vec<Token> {
     let mut currently_parsing = Parsing::Tokens;
 
     for c in chars.by_ref() {
+        indent += 1;
         match currently_parsing {
             Parsing::String => {
                 if '"' == c {
                     tokens.push(Token::STRING(buf.clone()));
                     buf.clear();
+                    // We need to do this manually because we're not using the loop
+                    prev_two_chars = (Some('"'), prev_two_chars.0);
                     currently_parsing = Parsing::Tokens;
+                    continue;
                 } else {
                     buf.push(c);
                 }
@@ -132,7 +137,7 @@ pub fn tokenize(mlg_str: &str) -> Vec<Token> {
                     (Some('|'), _) => {
                         tokens.push(Token::DOUBLE_BAR)
                     }
-                    _ => tokens.push(Token::BAR)
+                    _ => tokens.push(Token::BAR(indent - 1))
                 }
                 '.' => {
                     if let (Some('.'), _) = prev_two_chars {
@@ -181,11 +186,11 @@ pub fn tokenize(mlg_str: &str) -> Vec<Token> {
                 ' ' => {
                     if let Some(Token::NEWLINE(_)) = tokens.last() {
                         tokens.pop();
-                        tokens.push(Token::NEWLINE(indent));
+                        tokens.push(Token::NEWLINE(indent - 1));
                     }
                 }
                 '\t' => {
-                    panic!("Tabs are currently not allowed. Use spaces instead.");
+                    return parse_err!("Tabs are currently not allowed. Use spaces instead.");
                 }
                 '\r' => {}
                 '\n' => {
@@ -195,18 +200,17 @@ pub fn tokenize(mlg_str: &str) -> Vec<Token> {
                     tokens.push(Token::NEWLINE(0));
                     indent = 0;
                 }
-                _ => panic!("Unexpected character: {}", c),
+                _ => return parse_err!("Unexpected character: {}", c),
             }
         }
-
-        indent += 1;
+        
         // Update previous two characters
         prev_two_chars.1 = prev_two_chars.0;
         prev_two_chars.0 = Some(c);
     }
 
     match currently_parsing {
-        Parsing::String => panic!("Unterminated string"),
+        Parsing::String => return parse_err!("Unterminated string: {}", buf),
         Parsing::Number => {
             if buf.contains('.') {
                 tokens.push(Token::FLOAT(buf.parse().unwrap()));
@@ -225,5 +229,5 @@ pub fn tokenize(mlg_str: &str) -> Vec<Token> {
         tokens.pop();
     }
 
-    tokens
+    Ok(tokens)
 }
