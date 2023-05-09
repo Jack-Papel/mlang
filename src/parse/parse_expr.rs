@@ -1,10 +1,10 @@
-use super::tokens::Token;
-use crate::mlang::ast::{Expression, BinaryOperator, Identifier};
-use crate::mlang::variable::{Value};
-use super::parse_ast::*;
-use super::util::TokenQueue;
-use super::parse_match_expr::parse_match_expression;
 use crate::prelude::*;
+use super::parse_ast::*;
+use super::token_queue::TokenQueue;
+use super::parse_match_expr::parse_match_expression;
+use crate::constructs::token::Token;
+use crate::constructs::ast::{Expression, BinaryOperator, Identifier};
+use crate::constructs::variable::{Value};
 
 #[derive(Debug)]
 enum ExpressionFragment {

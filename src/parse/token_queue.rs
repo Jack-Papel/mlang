@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use super::tokens::Token;
+use crate::constructs::token::Token;
 
 #[derive(Clone)]
 pub struct TokenQueue<'a> {

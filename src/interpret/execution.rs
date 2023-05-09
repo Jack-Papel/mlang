@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use crate::mlang::variable::{Value, Builtin};
-use crate::mlang::ast::*;
 use crate::prelude::*;
+use crate::constructs::variable::{Value, Builtin};
+use crate::constructs::ast::*;
 
 pub struct Env<'a> {
     ident_map: HashMap<String, Value>,

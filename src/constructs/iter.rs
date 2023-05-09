@@ -1,5 +1,7 @@
-use super::{interpret::execution::{Env, call_function}, variable::Value, ast::Function};
 use crate::prelude::*;
+use super::variable::Value;
+use super::ast::Function;
+use crate::interpret::execution::{Env, call_function};
 
 pub trait MLGIter {
     fn next(&mut self, env: &mut Env) -> Result<Option<Value>>;

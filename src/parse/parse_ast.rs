@@ -1,9 +1,9 @@
-use crate::mlang::ast::*;
-use crate::mlang::program::Program;
-use super::tokens::*;
-use super::parse_expr::parse_next_expression;
 use crate::prelude::*;
-use super::util::*;
+use super::token_queue::TokenQueue;
+use crate::constructs::ast::*;
+use crate::constructs::program::Program;
+use crate::constructs::token::Token;
+use super::parse_expr::parse_next_expression;
 
 pub fn to_ast(tokens: Vec<Token>) -> Result<Program> {
     let mut token_queue = TokenQueue::new(&tokens);

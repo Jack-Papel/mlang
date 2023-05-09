@@ -1,7 +1,6 @@
-use super::ast::Block;
-use super::interpret::execution::{Executable, Env};
-use super::parse;
 use crate::prelude::*;
+use super::ast::Block;
+use crate::interpret::execution::{Executable, Env};
 
 #[derive(Debug, Clone)]
 pub struct Program {
@@ -10,7 +9,7 @@ pub struct Program {
 
 impl Program {
     pub fn new(program: String) -> Self {
-        parse::parse(program).unwrap()
+        crate::parse::parse(program).unwrap()
     }
 
     pub fn run(&self, output: &mut String) -> Result<()> {

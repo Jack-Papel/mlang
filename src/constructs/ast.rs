@@ -1,6 +1,4 @@
-use super::variable::Builtin;
-use super::variable::Value;
-use super::variable::Type;
+use super::variable::{Builtin, Value, Type};
 
 #[derive(Debug, Clone)]
 pub struct Identifier {
@@ -79,9 +77,9 @@ pub enum Statement {
 
 #[derive(Debug, Clone)]
 pub struct Pattern {
-    pub(super) identifier: Option<Identifier>,
-    pub(super) typ: Option<Type>,
-    pub(super) guard: Option<Expression>,
+    pub identifier: Option<Identifier>,
+    pub typ: Option<Type>,
+    pub guard: Option<Expression>,
 }
 
 #[derive(Debug, Clone)]
@@ -94,8 +92,8 @@ pub enum Function {
 
 #[derive(Debug, Clone)]
 pub struct MatchArm {
-    pub(super) pattern: Pattern,
-    pub(super) block: Block,
+    pub pattern: Pattern,
+    pub block: Block,
 }
 
 #[derive(Debug, Clone)]

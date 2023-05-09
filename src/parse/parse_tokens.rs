@@ -1,5 +1,5 @@
-use super::tokens::Token;
 use crate::prelude::*;
+use crate::constructs::token::Token;
 
 enum Parsing {
     Tokens,
