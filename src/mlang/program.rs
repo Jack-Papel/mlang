@@ -16,10 +16,10 @@ impl Program {
     pub fn run(&self, output: &mut String) -> Result<()> {
         println!("Running program");
         let mut env = Env::new();
-        self.block.execute(&mut env)?;
+        let result = self.block.execute(&mut env);
 
         env.write_to_string(output);
 
-        Ok(())
+        result.map(|_|())
     }
 }

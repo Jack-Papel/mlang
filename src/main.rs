@@ -11,9 +11,9 @@ fn main() -> Result<()> {
     source.read_to_string(&mut mlg_str).unwrap();
 
     let mut output_str = String::new();
-    Program::new(mlg_str).run(&mut output_str)?;
+    let result = Program::new(mlg_str).run(&mut output_str);
 
     println!("{}", output_str);
 
-    Ok(())
+    result
 }
