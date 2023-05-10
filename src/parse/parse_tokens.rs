@@ -31,7 +31,7 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
                 tokens.push(Token ($kind, Span {index, len: 1}))
             };
             ($kind:expr, $len:expr) => {
-                tokens.push(Token ($kind, Span {index, len: $len}))
+                tokens.push(Token ($kind, Span {index: index + 1 - $len, len: $len}))
             };
         }
         indent += 1;

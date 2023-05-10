@@ -34,7 +34,7 @@ impl Span {
 
     pub fn after(&self) -> Self {
         Span {
-            index: (self.index + self.len as u32).saturating_sub(1),
+            index: (self.index + self.len as u32),
             len: 1
         }
     }
