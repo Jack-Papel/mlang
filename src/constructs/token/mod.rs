@@ -16,34 +16,34 @@ pub struct Token {
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     // Single-character tokens.
-    LEFT_PAREN, RIGHT_PAREN, 
-    LEFT_SQR_BRACE, RIGHT_SQR_BRACE,
-    COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR,
-    PERCENT,
+    LeftParen, RightParen, 
+    LeftSqrBrace, RightSqrBrace,
+    Comma, Dot, Minus, Plus, Semicolon, Slash, Star,
+    Percent,
 
     // Iteration/Match-related tokens
-    BAR(/*index:*/ usize), COLON, TILDE, 
-    DOLLAR, AT, HASH, 
-    TRIPLE_AMP, TRIPLE_BAR,
-    DOT_DOT,
+    Bar(/*index:*/ usize), Colon, Tilde, 
+    Dollar, At, Hash, 
+    TripleAmp, TripleBar,
+    DotDot,
 
     // Reserved, but unused, tokens
-    AMP, CARET, QUESTION,
+    Amp, Caret, Question,
 
     // One or two character tokens.
-    EXCLAMATION, EXCLAMATION_EQUAL,
-    EQUAL, EQUAL_EQUAL,
-    GREATER, GREATER_EQUAL,
-    LESS, LESS_EQUAL,
-    DOUBLE_AMP, DOUBLE_BAR,
-    COLON_COLON,
+    Exclamation, ExclamationEqual,
+    Equal, EqualEqual,
+    Greater, GreaterEqual,
+    Less, LessEqual,
+    DoubleAmp, DoubleBar,
+    ColonColon,
 
     // Literals.
-    IDENTIFIER(Symbol), 
+    Identifier(Symbol), 
     Literal(Literal),
 
     // Whitespace.
-    NEWLINE(usize),
+    Newline(usize),
 
     // Keywords.
     Keyword(Symbol),
@@ -72,33 +72,33 @@ pub struct Literal {
 impl TokenKind {
     pub fn as_binary_operator(&self) -> Result<BinaryOperator> {
         match self {
-            TokenKind::DOT_DOT => Ok(BinaryOperator::Range),
-            TokenKind::DOLLAR => Ok(BinaryOperator::ForEach),
-            TokenKind::AT => Ok(BinaryOperator::Map),
-            TokenKind::HASH => Ok(BinaryOperator::Filter),
-            TokenKind::TRIPLE_AMP => Ok(BinaryOperator::All),
-            TokenKind::TRIPLE_BAR => Ok(BinaryOperator::Any),
-            TokenKind::EXCLAMATION_EQUAL => Ok(BinaryOperator::NotEqual),
-            TokenKind::EQUAL_EQUAL => Ok(BinaryOperator::Equal),
-            TokenKind::GREATER => Ok(BinaryOperator::Greater),
-            TokenKind::GREATER_EQUAL => Ok(BinaryOperator::GreaterEqual),
-            TokenKind::LESS => Ok(BinaryOperator::Less),
-            TokenKind::LESS_EQUAL => Ok(BinaryOperator::LessEqual),
-            TokenKind::DOUBLE_AMP => Ok(BinaryOperator::And),
-            TokenKind::DOUBLE_BAR => Ok(BinaryOperator::Or),
-            TokenKind::PERCENT => Ok(BinaryOperator::Mod),
-            TokenKind::STAR => Ok(BinaryOperator::Mul),
-            TokenKind::SLASH => Ok(BinaryOperator::Div),
-            TokenKind::PLUS => Ok(BinaryOperator::Plus),
-            TokenKind::MINUS => Ok(BinaryOperator::Minus),
+            TokenKind::DotDot => Ok(BinaryOperator::Range),
+            TokenKind::Dollar => Ok(BinaryOperator::ForEach),
+            TokenKind::At => Ok(BinaryOperator::Map),
+            TokenKind::Hash => Ok(BinaryOperator::Filter),
+            TokenKind::TripleAmp => Ok(BinaryOperator::All),
+            TokenKind::TripleBar => Ok(BinaryOperator::Any),
+            TokenKind::ExclamationEqual => Ok(BinaryOperator::NotEqual),
+            TokenKind::EqualEqual => Ok(BinaryOperator::Equal),
+            TokenKind::Greater => Ok(BinaryOperator::Greater),
+            TokenKind::GreaterEqual => Ok(BinaryOperator::GreaterEqual),
+            TokenKind::Less => Ok(BinaryOperator::Less),
+            TokenKind::LessEqual => Ok(BinaryOperator::LessEqual),
+            TokenKind::DoubleAmp => Ok(BinaryOperator::And),
+            TokenKind::DoubleBar => Ok(BinaryOperator::Or),
+            TokenKind::Percent => Ok(BinaryOperator::Mod),
+            TokenKind::Star => Ok(BinaryOperator::Mul),
+            TokenKind::Slash => Ok(BinaryOperator::Div),
+            TokenKind::Plus => Ok(BinaryOperator::Plus),
+            TokenKind::Minus => Ok(BinaryOperator::Minus),
             _ => parse_err!("\"{self:?}\" is not a binary operator"),
         }
     }
 
     pub(in super::super) fn as_unary_operator(&self) -> Result<UnaryOperator> {
         match self {
-            TokenKind::MINUS => Ok(UnaryOperator::Minus),
-            TokenKind::EXCLAMATION => Ok(UnaryOperator::Not),
+            TokenKind::Minus => Ok(UnaryOperator::Minus),
+            TokenKind::Exclamation => Ok(UnaryOperator::Not),
             _ => parse_err!("\"{self:?}\" is not a unary operator"),
         }
     }

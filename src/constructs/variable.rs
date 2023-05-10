@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use crate::prelude::*;
 use super::ast::Function;
 use super::iter::{MLGIter, FilterIter, MapIter, RangeIter, ListIter, CharIter};

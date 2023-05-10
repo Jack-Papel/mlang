@@ -78,82 +78,82 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
         }
         if let Parsing::Tokens = currently_parsing {
             match c {
-                '(' => tokens.push(TokenKind::LEFT_PAREN),
-                ')' => tokens.push(TokenKind::RIGHT_PAREN),
-                '[' => tokens.push(TokenKind::LEFT_SQR_BRACE),
-                ']' => tokens.push(TokenKind::RIGHT_SQR_BRACE),
-                ',' => tokens.push(TokenKind::COMMA),
-                '-' => tokens.push(TokenKind::MINUS),
-                '+' => tokens.push(TokenKind::PLUS),
-                ';' => tokens.push(TokenKind::SEMICOLON),
-                '$' => tokens.push(TokenKind::DOLLAR),
-                '@' => tokens.push(TokenKind::AT),
-                '#' => tokens.push(TokenKind::HASH),
-                '~' => tokens.push(TokenKind::TILDE),
-                '%' => tokens.push(TokenKind::PERCENT),
-                '!' => tokens.push(TokenKind::EXCLAMATION),
-                '>' => tokens.push(TokenKind::GREATER),
-                '<' => tokens.push(TokenKind::LESS),
+                '(' => tokens.push(TokenKind::LeftParen),
+                ')' => tokens.push(TokenKind::RightParen),
+                '[' => tokens.push(TokenKind::LeftSqrBrace),
+                ']' => tokens.push(TokenKind::RightSqrBrace),
+                ',' => tokens.push(TokenKind::Comma),
+                '-' => tokens.push(TokenKind::Minus),
+                '+' => tokens.push(TokenKind::Plus),
+                ';' => tokens.push(TokenKind::Semicolon),
+                '$' => tokens.push(TokenKind::Dollar),
+                '@' => tokens.push(TokenKind::At),
+                '#' => tokens.push(TokenKind::Hash),
+                '~' => tokens.push(TokenKind::Tilde),
+                '%' => tokens.push(TokenKind::Percent),
+                '!' => tokens.push(TokenKind::Exclamation),
+                '>' => tokens.push(TokenKind::Greater),
+                '<' => tokens.push(TokenKind::Less),
                 '=' => match prev_two_chars {
                     (Some('='), _) => {
                         tokens.pop();
-                        tokens.push(TokenKind::EQUAL_EQUAL)
+                        tokens.push(TokenKind::EqualEqual)
                     },
                     (Some('!'), _) => {
                         tokens.pop();
-                        tokens.push(TokenKind::EXCLAMATION_EQUAL)
+                        tokens.push(TokenKind::ExclamationEqual)
                     },
                     (Some('<'), _) => {
                         tokens.pop();
-                        tokens.push(TokenKind::LESS_EQUAL)
+                        tokens.push(TokenKind::LessEqual)
                     },
                     (Some('>'), _) => {
                         tokens.pop();
-                        tokens.push(TokenKind::GREATER_EQUAL)
+                        tokens.push(TokenKind::GreaterEqual)
                     },
-                    _ => tokens.push(TokenKind::EQUAL)
+                    _ => tokens.push(TokenKind::Equal)
                 }
                 '&' => match prev_two_chars {
                     (Some('&'), Some('&')) => {
                         tokens.pop();
-                        tokens.push(TokenKind::TRIPLE_AMP)
+                        tokens.push(TokenKind::TripleAmp)
                     },
                     (Some('&'), _) => {
-                        tokens.push(TokenKind::DOUBLE_AMP)
+                        tokens.push(TokenKind::DoubleAmp)
                     }
                     _ => {}
                 }
                 '|' => match prev_two_chars {
                     (Some('|'), Some('|')) => {
                         tokens.pop();
-                        tokens.push(TokenKind::TRIPLE_BAR)
+                        tokens.push(TokenKind::TripleBar)
                     },
                     (Some('|'), _) => {
-                        tokens.push(TokenKind::DOUBLE_BAR)
+                        tokens.push(TokenKind::DoubleBar)
                     }
-                    _ => tokens.push(TokenKind::BAR(indent - 1))
+                    _ => tokens.push(TokenKind::Bar(indent - 1))
                 }
                 '.' => {
                     if let (Some('.'), _) = prev_two_chars {
                         tokens.pop();
-                        tokens.push(TokenKind::DOT_DOT);
+                        tokens.push(TokenKind::DotDot);
                     } else {
-                        tokens.push(TokenKind::DOT);
+                        tokens.push(TokenKind::Dot);
                     }
                 }
                 ':' => {
                     if let (Some(':'), _) = prev_two_chars {
                         tokens.pop();
-                        tokens.push(TokenKind::COLON_COLON);
+                        tokens.push(TokenKind::ColonColon);
                     } else {
-                        tokens.push(TokenKind::COLON);
+                        tokens.push(TokenKind::Colon);
                     }
                 }
                 '*' => {
                     if let (Some('/'), _) = prev_two_chars {
                         currently_parsing = Parsing::MultilineComment;
                     } else {
-                        tokens.push(TokenKind::STAR);
+                        tokens.push(TokenKind::Star);
                     }
                 }
                 '"' => {
@@ -174,13 +174,13 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
                     if let (Some('/'), _) = prev_two_chars {
                         currently_parsing = Parsing::SingleLineComment;
                     } else {
-                        tokens.push(TokenKind::SLASH);
+                        tokens.push(TokenKind::Slash);
                     }
                 }
                 ' ' => {
-                    if let Some(TokenKind::NEWLINE(_)) = tokens.last() {
+                    if let Some(TokenKind::Newline(_)) = tokens.last() {
                         tokens.pop();
-                        tokens.push(TokenKind::NEWLINE(indent - 1));
+                        tokens.push(TokenKind::Newline(indent - 1));
                     }
                 }
                 '\t' => {
@@ -188,10 +188,10 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
                 }
                 '\r' => {}
                 '\n' => {
-                    if let Some(TokenKind::NEWLINE(_)) = tokens.last() {
+                    if let Some(TokenKind::Newline(_)) = tokens.last() {
                         tokens.pop();
                     }
-                    tokens.push(TokenKind::NEWLINE(0));
+                    tokens.push(TokenKind::Newline(0));
                     indent = 0;
                 }
                 _ => return parse_err!("Unexpected character: {}", c),
@@ -218,7 +218,7 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
     }
     
     // Remove newline at the end of the file
-    if let Some(TokenKind::NEWLINE(_)) = tokens.last() {
+    if let Some(TokenKind::Newline(_)) = tokens.last() {
         tokens.pop();
     }
 
@@ -234,6 +234,6 @@ fn get_token_from_symbol_string(buf: &String) -> TokenKind {
         "true" => TokenKind::Literal(Literal {kind: LiteralKind::Bool, symbol: *builtin_symbols::TRUE}),
         "false" => TokenKind::Literal(Literal {kind: LiteralKind::Bool, symbol: *builtin_symbols::FALSE}),
         "yield" => TokenKind::Keyword(*builtin_symbols::YIELD),
-        _ => TokenKind::IDENTIFIER(Symbol::from(buf.as_str()))
+        _ => TokenKind::Identifier(Symbol::from(buf.as_str()))
     }
 }

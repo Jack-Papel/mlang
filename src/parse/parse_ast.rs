@@ -19,7 +19,7 @@ pub fn find_end_of_block(token_queue: &mut TokenQueue, block_indent: usize) -> u
     // An block ends when the next line has a lower indentation than the current line
     loop {
         match token_queue.next() {
-            Some(TokenKind::NEWLINE(indent)) => {
+            Some(TokenKind::Newline(indent)) => {
                 if *indent < block_indent {
                     return length;
                 }
@@ -37,7 +37,7 @@ pub fn parse_block(token_queue: &mut TokenQueue, block_indent: usize) -> Result<
     let mut token_queue = token_queue.take(end);
 
     while let Some(token) = token_queue.peek() {
-        if let TokenKind::NEWLINE(_) = token {
+        if let TokenKind::Newline(_) = token {
             token_queue.next();
             continue;
         }
@@ -56,7 +56,7 @@ pub fn parse_next_statement(token_queue: &mut TokenQueue, current_indent: usize)
     match token_queue.peek() {
         Some(TokenKind::Keyword(symbol)) if *symbol == *builtin_symbols::LET => {
             let ident = match token_queue.peek_n(1) {
-                Some(TokenKind::IDENTIFIER(ident)) => ident.get_str().to_string(),
+                Some(TokenKind::Identifier(ident)) => ident.get_str().to_string(),
                 _ => return parse_err!("Expected identifier after let"),
             };
 
@@ -69,9 +69,9 @@ pub fn parse_next_statement(token_queue: &mut TokenQueue, current_indent: usize)
             let expression = parse_next_expression(token_queue, current_indent)?;
             Ok(Statement::Return(expression))
         },
-        Some(TokenKind::IDENTIFIER(ident)) => {
+        Some(TokenKind::Identifier(ident)) => {
             let ident = ident.get_str().to_string();
-            if let Some(TokenKind::EQUAL) = token_queue.peek_n(1) {
+            if let Some(TokenKind::Equal) = token_queue.peek_n(1) {
                 token_queue.skip(2);
                 let expression = parse_next_expression(token_queue, current_indent)?;
                 Ok(Statement::Set(Identifier { name: ident }, expression))
@@ -80,7 +80,7 @@ pub fn parse_next_statement(token_queue: &mut TokenQueue, current_indent: usize)
                 Ok(Statement::Expression(expression))
             }
         }
-        Some(TokenKind::NEWLINE(_)) => {
+        Some(TokenKind::Newline(_)) => {
             unreachable!("Should be handled by parse_block()");
         }
         Some(_) => {
