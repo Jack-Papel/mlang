@@ -1,6 +1,7 @@
+use crate::constructs::token::span::Span;
 use crate::constructs::token::symbol::{Symbol, builtin_symbols};
 use crate::prelude::*;
-use crate::constructs::token::{TokenKind, LiteralKind, Literal};
+use crate::constructs::token::{TokenKind, LiteralKind, Literal, Token};
 
 enum Parsing {
     Tokens,
@@ -11,7 +12,7 @@ enum Parsing {
     Symbol,
 }
 
-pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
+pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
     let mut chars = mlg_str.chars().peekable();
 
@@ -23,15 +24,30 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
     let mut buf: String = String::new();
     let mut currently_parsing = Parsing::Tokens;
 
-    for c in chars.by_ref() {
+    for (index, c) in chars.by_ref().enumerate() {
+        let index = index as u32;
+        macro_rules! push_token {
+            ($kind:expr) => {
+                tokens.push(Token ($kind, Span {index, len: 1}))
+            };
+            ($kind:expr, $len:expr) => {
+                tokens.push(Token ($kind, Span {index, len: $len}))
+            };
+        }
         indent += 1;
         match currently_parsing {
             Parsing::String => {
                 if '"' == c {
-                    tokens.push(TokenKind::Literal(Literal {
-                        kind: LiteralKind::String,
-                        symbol: Symbol::from(buf.as_str())
-                    }));
+                    tokens.push(Token(
+                        TokenKind::Literal(Literal {
+                            kind: LiteralKind::String,
+                            symbol: Symbol::from(buf.as_str())
+                        }), 
+                        Span {
+                            index: index - buf.len() as u32,
+                            len: buf.len() as u16
+                        }
+                    ));
                     buf.clear();
                     // We need to do this manually because we're not using the loop
                     prev_two_chars = (Some('"'), prev_two_chars.0);
@@ -45,10 +61,16 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
                 if c.is_numeric() {
                     buf.push(c);
                 } else {
-                    tokens.push(TokenKind::Literal(Literal {
-                        kind: if buf.contains('.') { LiteralKind::Float } else { LiteralKind::Int },
-                        symbol: Symbol::from(buf.as_str())
-                    }));
+                    tokens.push(Token(
+                        TokenKind::Literal(Literal {
+                            kind: if buf.contains('.') { LiteralKind::Float } else { LiteralKind::Int },
+                            symbol: Symbol::from(buf.as_str())
+                        }),
+                        Span {
+                            index: index - buf.len() as u32,
+                            len: buf.len() as u16
+                        }
+                    ));
                     buf.clear();
                     currently_parsing = Parsing::Tokens;
                 }
@@ -57,7 +79,7 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
                 if c.is_alphanumeric() || '_' == c {
                     buf.push(c);
                 } else {
-                    tokens.push(get_token_from_symbol_string(&buf));
+                    push_token!(get_kind_from_symbol_string(&buf));
                     buf.clear();
                     currently_parsing = Parsing::Tokens;
                 }
@@ -78,82 +100,83 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
         }
         if let Parsing::Tokens = currently_parsing {
             match c {
-                '(' => tokens.push(TokenKind::LeftParen),
-                ')' => tokens.push(TokenKind::RightParen),
-                '[' => tokens.push(TokenKind::LeftSqrBrace),
-                ']' => tokens.push(TokenKind::RightSqrBrace),
-                ',' => tokens.push(TokenKind::Comma),
-                '-' => tokens.push(TokenKind::Minus),
-                '+' => tokens.push(TokenKind::Plus),
-                ';' => tokens.push(TokenKind::Semicolon),
-                '$' => tokens.push(TokenKind::Dollar),
-                '@' => tokens.push(TokenKind::At),
-                '#' => tokens.push(TokenKind::Hash),
-                '~' => tokens.push(TokenKind::Tilde),
-                '%' => tokens.push(TokenKind::Percent),
-                '!' => tokens.push(TokenKind::Exclamation),
-                '>' => tokens.push(TokenKind::Greater),
-                '<' => tokens.push(TokenKind::Less),
+                '(' => push_token!(TokenKind::LeftParen),
+                ')' => push_token!(TokenKind::RightParen),
+                '[' => push_token!(TokenKind::LeftSqrBrace),
+                ']' => push_token!(TokenKind::RightSqrBrace),
+                ',' => push_token!(TokenKind::Comma),
+                '-' => push_token!(TokenKind::Minus),
+                '+' => push_token!(TokenKind::Plus),
+                ';' => push_token!(TokenKind::Semicolon),
+                '$' => push_token!(TokenKind::Dollar),
+                '@' => push_token!(TokenKind::At),
+                '#' => push_token!(TokenKind::Hash),
+                '~' => push_token!(TokenKind::Tilde),
+                '%' => push_token!(TokenKind::Percent),
+                '!' => push_token!(TokenKind::Exclamation),
+                '>' => push_token!(TokenKind::Greater),
+                '<' => push_token!(TokenKind::Less),
                 '=' => match prev_two_chars {
                     (Some('='), _) => {
                         tokens.pop();
-                        tokens.push(TokenKind::EqualEqual)
+                        push_token!(TokenKind::EqualEqual, 2)
                     },
                     (Some('!'), _) => {
                         tokens.pop();
-                        tokens.push(TokenKind::ExclamationEqual)
+                        push_token!(TokenKind::ExclamationEqual, 2)
                     },
                     (Some('<'), _) => {
                         tokens.pop();
-                        tokens.push(TokenKind::LessEqual)
+                        push_token!(TokenKind::LessEqual, 2)
                     },
                     (Some('>'), _) => {
                         tokens.pop();
-                        tokens.push(TokenKind::GreaterEqual)
+                        push_token!(TokenKind::GreaterEqual, 2)
                     },
-                    _ => tokens.push(TokenKind::Equal)
+                    _ => push_token!(TokenKind::Equal)
                 }
                 '&' => match prev_two_chars {
                     (Some('&'), Some('&')) => {
                         tokens.pop();
-                        tokens.push(TokenKind::TripleAmp)
+                        push_token!(TokenKind::TripleAmp, 3)
                     },
                     (Some('&'), _) => {
-                        tokens.push(TokenKind::DoubleAmp)
+                        tokens.pop();
+                        push_token!(TokenKind::DoubleAmp, 2)
                     }
-                    _ => {}
+                    _ => push_token!(TokenKind::Amp)
                 }
                 '|' => match prev_two_chars {
                     (Some('|'), Some('|')) => {
                         tokens.pop();
-                        tokens.push(TokenKind::TripleBar)
+                        push_token!(TokenKind::TripleBar, 3)
                     },
                     (Some('|'), _) => {
-                        tokens.push(TokenKind::DoubleBar)
+                        push_token!(TokenKind::DoubleBar, 2)
                     }
-                    _ => tokens.push(TokenKind::Bar(indent - 1))
+                    _ => push_token!(TokenKind::Bar(indent - 1))
                 }
                 '.' => {
                     if let (Some('.'), _) = prev_two_chars {
                         tokens.pop();
-                        tokens.push(TokenKind::DotDot);
+                        push_token!(TokenKind::DotDot, 2)
                     } else {
-                        tokens.push(TokenKind::Dot);
+                        push_token!(TokenKind::Dot)
                     }
                 }
                 ':' => {
                     if let (Some(':'), _) = prev_two_chars {
                         tokens.pop();
-                        tokens.push(TokenKind::ColonColon);
+                        push_token!(TokenKind::ColonColon, 2)
                     } else {
-                        tokens.push(TokenKind::Colon);
+                        push_token!(TokenKind::Colon)
                     }
                 }
                 '*' => {
                     if let (Some('/'), _) = prev_two_chars {
                         currently_parsing = Parsing::MultilineComment;
                     } else {
-                        tokens.push(TokenKind::Star);
+                        push_token!(TokenKind::Star)
                     }
                 }
                 '"' => {
@@ -174,27 +197,34 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
                     if let (Some('/'), _) = prev_two_chars {
                         currently_parsing = Parsing::SingleLineComment;
                     } else {
-                        tokens.push(TokenKind::Slash);
+                        push_token!(TokenKind::Slash)
                     }
                 }
                 ' ' => {
-                    if let Some(TokenKind::Newline(_)) = tokens.last() {
+                    if let Some(Token(TokenKind::Newline(_), Span{index: newline_start, ..})) = tokens.last() {
+                        let newline_start = newline_start.clone();
                         tokens.pop();
-                        tokens.push(TokenKind::Newline(indent - 1));
+                        tokens.push(Token(
+                            TokenKind::Newline(indent - 1), 
+                            Span {
+                                index: newline_start, 
+                                len: (index - newline_start) as u16
+                            }
+                        ));
                     }
                 }
                 '\t' => {
-                    return parse_err!("Tabs are currently not allowed. Use spaces instead.");
+                    return parse_err!(Some(Span::unit(index)), "Tabs are currently not allowed. Use spaces instead.");
                 }
                 '\r' => {}
                 '\n' => {
-                    if let Some(TokenKind::Newline(_)) = tokens.last() {
+                    if let Some(Token(TokenKind::Newline(_), ..)) = tokens.last() {
                         tokens.pop();
                     }
-                    tokens.push(TokenKind::Newline(0));
+                    push_token!(TokenKind::Newline(0), 0);
                     indent = 0;
                 }
-                _ => return parse_err!("Unexpected character: {}", c),
+                _ => return parse_err!(Some(Span::unit(index)), "Unexpected character: {}", c),
             }
         }
         
@@ -204,28 +234,47 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
     }
 
     match currently_parsing {
-        Parsing::String => return parse_err!("Unterminated string: {}", buf),
+        Parsing::String => return parse_err!(Some(Span { 
+            index: (mlg_str.len() - buf.len()) as u32,
+            len: buf.len() as u16
+        }), "Unterminated string: {}", buf),
         Parsing::Number => {
-            tokens.push(TokenKind::Literal(Literal {
-                kind: if buf.contains('.') { LiteralKind::Float } else { LiteralKind::Int },
-                symbol: Symbol::from(buf.as_str())
-            }));
+            tokens.push(Token(
+                TokenKind::Literal(Literal {
+                    kind: if buf.contains('.') { LiteralKind::Float } else { LiteralKind::Int },
+                    symbol: Symbol::from(buf.as_str())
+                }),
+                Span {
+                    index: (mlg_str.len() - buf.len()) as u32,
+                    len: buf.len() as u16
+                }
+            ));
         },
         Parsing::Symbol => {
-            tokens.push(get_token_from_symbol_string(&buf));
+            tokens.push(Token(
+                get_kind_from_symbol_string(&buf),
+                Span {
+                    index: (mlg_str.len() - buf.len()) as u32,
+                    len: buf.len() as u16
+                }
+            ));
         },
         _ => {}
     }
     
     // Remove newline at the end of the file
-    if let Some(TokenKind::Newline(_)) = tokens.last() {
+    if let Some(Token(TokenKind::Newline(_), ..)) = tokens.last() {
         tokens.pop();
+    }
+
+    if let Some(token) = tokens.iter().find(|tok| tok.0 == TokenKind::Amp) {
+        return parse_err!(Some(token.1), "Ampersands are not currently supported!");
     }
 
     Ok(tokens)
 }
 
-fn get_token_from_symbol_string(buf: &String) -> TokenKind {
+fn get_kind_from_symbol_string(buf: &String) -> TokenKind {
     match buf.as_str() {
         "let" => TokenKind::Keyword(*builtin_symbols::LET),
         "struct" => TokenKind::Keyword(*builtin_symbols::STRUCT),

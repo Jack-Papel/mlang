@@ -1,16 +1,13 @@
 use crate::prelude::*;
 use crate::constructs::ast::{BinaryOperator, UnaryOperator};
 
-mod span;
+pub mod span;
 use span::Span;
 pub mod symbol;
 use symbol::Symbol;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Token {
-    kind: TokenKind,
-    span: Span
-}
+pub struct Token (pub TokenKind, pub Span);
 
 #[allow(unused)]
 #[derive(Debug, Clone, PartialEq)]
@@ -70,7 +67,7 @@ pub struct Literal {
 }
 
 impl TokenKind {
-    pub fn as_binary_operator(&self) -> Result<BinaryOperator> {
+    pub fn as_binary_operator(&self, span: Option<Span>) -> Result<BinaryOperator> {
         match self {
             TokenKind::DotDot => Ok(BinaryOperator::Range),
             TokenKind::Dollar => Ok(BinaryOperator::ForEach),
@@ -91,15 +88,15 @@ impl TokenKind {
             TokenKind::Slash => Ok(BinaryOperator::Div),
             TokenKind::Plus => Ok(BinaryOperator::Plus),
             TokenKind::Minus => Ok(BinaryOperator::Minus),
-            _ => parse_err!("\"{self:?}\" is not a binary operator"),
+            _ => parse_err!(span, "\"{self:?}\" is not a binary operator"),
         }
     }
 
-    pub(in super::super) fn as_unary_operator(&self) -> Result<UnaryOperator> {
+    pub(in super::super) fn as_unary_operator(&self, span: Option<Span>) -> Result<UnaryOperator> {
         match self {
             TokenKind::Minus => Ok(UnaryOperator::Minus),
             TokenKind::Exclamation => Ok(UnaryOperator::Not),
-            _ => parse_err!("\"{self:?}\" is not a unary operator"),
+            _ => parse_err!(span, "\"{self:?}\" is not a unary operator"),
         }
     }
 }

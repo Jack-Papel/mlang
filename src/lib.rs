@@ -4,11 +4,13 @@ pub mod constructs;
 pub use constructs::program;
 
 pub mod prelude {
+    use crate::constructs::token::span::Span;
+
     pub type Result<T> = std::result::Result<T, MLGErr>;
 
     #[derive(Debug, Clone)]
     pub enum MLGErr {
-        ParseErr(String),
+        ParseErr(Option<Span>, String),
         ExecErr(String),
         CompilerErr(String),
     }
@@ -16,7 +18,7 @@ pub mod prelude {
     impl ToString for MLGErr {
         fn to_string(&self) -> String {
             match self {
-                Self::ParseErr(s) => format!("Failed to parse: {}", s),
+                Self::ParseErr(span, s) => format!("Failed to parse: {}", s),
                 Self::ExecErr(s) => format!("Failed to execute: {}", s),
                 Self::CompilerErr(s) => format!("Failed to compile: {}", s),
             }
@@ -24,7 +26,7 @@ pub mod prelude {
     }
 
     macro_rules! parse_err {
-        ($($arg:tt)*) => (Err(MLGErr::ParseErr(format!($($arg)*))))
+        ($span:expr, $($args:tt)*) => (Err(MLGErr::ParseErr($span, format!($($args)*))))
     }
 
     macro_rules! exec_err {

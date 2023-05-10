@@ -8,8 +8,8 @@ pub struct Program {
 }
 
 impl Program {
-    pub fn new(program: String) -> Self {
-        crate::parse::parse(program).unwrap()
+    pub fn new(program: String) -> Result<Self> {
+        crate::parse::parse(program)
     }
 
     pub fn run(&self, output: &mut String) -> Result<()> {

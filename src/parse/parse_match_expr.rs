@@ -2,7 +2,7 @@ use crate::prelude::*;
 use super::token_queue::TokenQueue;
 use super::parse_expr::{parse_next_expression, parse_single_token};
 use super::parse_ast::{parse_block, parse_next_statement, find_end_of_block};
-use crate::constructs::token::TokenKind;
+use crate::constructs::token::{TokenKind, Token};
 use crate::constructs::ast::*;
 use crate::constructs::variable::*;
 
@@ -17,28 +17,28 @@ pub fn parse_match_expression(token_queue: &mut TokenQueue, current_indent: usiz
         }
         let pattern;
 
-        if let Some(TokenKind::Bar(indent)) = token_queue.next() {
+        if let Some(Token(TokenKind::Bar(indent), span)) = token_queue.next() {
             if *indent != current_indent {
-                return parse_err!("Expected match arm to be indented");
+                return parse_err!(Some(*span), "Expected match arm to be indented");
             }
         } else {
-            return parse_err!("Tried to parse match arm without bar. Instead, got: {:?}", token_queue.peek());
+            return parse_err!(token_queue.peek().map(|tok| tok.1), "Tried to parse match arm without bar. Instead, got: {:?}", token_queue.peek());
         }
 
         if let Some((idx, token)) = token_queue.clone().enumerate().find(|(_, token)| {
-            matches!(token, TokenKind::Colon)
+            matches!(token, Token(TokenKind::Colon, ..))
         }) {
             if idx > end {
-                return parse_err!("Expected colon after match pattern");
+                return parse_err!(None, "Expected colon after match pattern");
             }
             pattern = parse_pattern(&mut token_queue.take(idx))?;
         } else {
-            return parse_err!("Expected colon after match pattern");
+            return parse_err!(None, "Expected colon after match pattern");
         }
 
         token_queue.next(); // Skip the COLON
 
-        let block = if let Some(TokenKind::Newline(_)) = token_queue.peek() {
+        let block = if let Some(Token(TokenKind::Newline(_), ..)) = token_queue.peek() {
             token_queue.next();
             parse_block(token_queue, current_indent + 1)?
         } else {
@@ -61,7 +61,7 @@ pub fn parse_match_expression(token_queue: &mut TokenQueue, current_indent: usiz
 
 fn parse_pattern(token_queue: &mut TokenQueue) -> Result<Pattern> {
     if let Some((idx, _)) = token_queue.clone().enumerate().find(|(_, token)| {
-        matches!(token, TokenKind::Tilde)
+        matches!(token, Token(TokenKind::Tilde, ..))
     }) {
         let mut identifier = None;
         let mut typ = None;
@@ -91,7 +91,7 @@ fn parse_pattern(token_queue: &mut TokenQueue) -> Result<Pattern> {
                             guard: None
                         })
                     } else {
-                        parse_err!("Expected identifier after type")
+                        parse_err!(Some(first.1.after()), "Expected identifier after type")
                     }
                 } else {
                     Ok(Pattern {
@@ -101,7 +101,7 @@ fn parse_pattern(token_queue: &mut TokenQueue) -> Result<Pattern> {
                     })
                 }
             } else {
-                parse_err!("Expected identifier")
+                parse_err!(Some(first.1), "Expected identifier")
             }
         } else {
             Ok(
