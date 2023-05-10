@@ -1,11 +1,12 @@
+use crate::constructs::token::symbol::builtin_symbols;
 use crate::prelude::*;
 use super::token_queue::TokenQueue;
 use crate::constructs::ast::*;
 use crate::constructs::program::Program;
-use crate::constructs::token::Token;
+use crate::constructs::token::TokenKind;
 use super::parse_expr::parse_next_expression;
 
-pub fn to_ast(tokens: Vec<Token>) -> Result<Program> {
+pub fn to_ast(tokens: Vec<TokenKind>) -> Result<Program> {
     let mut token_queue = TokenQueue::new(&tokens);
 
     Ok(Program { 
@@ -18,7 +19,7 @@ pub fn find_end_of_block(token_queue: &mut TokenQueue, block_indent: usize) -> u
     // An block ends when the next line has a lower indentation than the current line
     loop {
         match token_queue.next() {
-            Some(Token::NEWLINE(indent)) => {
+            Some(TokenKind::NEWLINE(indent)) => {
                 if *indent < block_indent {
                     return length;
                 }
@@ -36,7 +37,7 @@ pub fn parse_block(token_queue: &mut TokenQueue, block_indent: usize) -> Result<
     let mut token_queue = token_queue.take(end);
 
     while let Some(token) = token_queue.peek() {
-        if let Token::NEWLINE(_) = token {
+        if let TokenKind::NEWLINE(_) = token {
             token_queue.next();
             continue;
         }
@@ -53,9 +54,9 @@ pub fn parse_block(token_queue: &mut TokenQueue, block_indent: usize) -> Result<
 
 pub fn parse_next_statement(token_queue: &mut TokenQueue, current_indent: usize) -> Result<Statement> {
     match token_queue.peek() {
-        Some(Token::LET) => {
+        Some(TokenKind::Keyword(symbol)) if *symbol == *builtin_symbols::LET => {
             let ident = match token_queue.peek_n(1) {
-                Some(Token::IDENTIFIER(ident)) => ident.to_string(),
+                Some(TokenKind::IDENTIFIER(ident)) => ident.get_str().to_string(),
                 _ => return parse_err!("Expected identifier after let"),
             };
 
@@ -63,14 +64,14 @@ pub fn parse_next_statement(token_queue: &mut TokenQueue, current_indent: usize)
             let expression = parse_next_expression(token_queue, current_indent)?;
             Ok(Statement::Let(Identifier { name: ident }, expression))
         },
-        Some(Token::RETURN) => {
+        Some(TokenKind::Keyword(symbol)) if *symbol == *builtin_symbols::RETURN => {
             token_queue.skip(1);
             let expression = parse_next_expression(token_queue, current_indent)?;
             Ok(Statement::Return(expression))
         },
-        Some(Token::IDENTIFIER(ident)) => {
-            let ident = ident.to_string();
-            if let Some(Token::EQUAL) = token_queue.peek_n(1) {
+        Some(TokenKind::IDENTIFIER(ident)) => {
+            let ident = ident.get_str().to_string();
+            if let Some(TokenKind::EQUAL) = token_queue.peek_n(1) {
                 token_queue.skip(2);
                 let expression = parse_next_expression(token_queue, current_indent)?;
                 Ok(Statement::Set(Identifier { name: ident }, expression))
@@ -79,7 +80,7 @@ pub fn parse_next_statement(token_queue: &mut TokenQueue, current_indent: usize)
                 Ok(Statement::Expression(expression))
             }
         }
-        Some(Token::NEWLINE(_)) => {
+        Some(TokenKind::NEWLINE(_)) => {
             unreachable!("Should be handled by parse_block()");
         }
         Some(_) => {

@@ -127,7 +127,7 @@ impl Executable for Expression {
                 let right = right.execute(env)?;
 
                 match operator {
-                    BinaryOperator::PLUS => {
+                    BinaryOperator::Plus => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Int(left + right)),
                             (Value::Float(left), Value::Float(right)) => Ok(Value::Float(left + right)),
@@ -135,34 +135,34 @@ impl Executable for Expression {
                             _ => exec_err!("Cannot add {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::MINUS => {
+                    BinaryOperator::Minus => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Int(left - right)),
                             (Value::Float(left), Value::Float(right)) => Ok(Value::Float(left - right)),
                             _ => exec_err!("Cannot subtract {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::MUL => {
+                    BinaryOperator::Mul => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Int(left * right)),
                             (Value::Float(left), Value::Float(right)) => Ok(Value::Float(left * right)),
                             _ => exec_err!("Cannot multiply {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::DIV => {
+                    BinaryOperator::Div => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Int(left / right)),
                             (Value::Float(left), Value::Float(right)) => Ok(Value::Float(left / right)),
                             _ => exec_err!("Cannot divide {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::RANGE => {
+                    BinaryOperator::Range => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::IntRange(*left, *right)),
                             _ => exec_err!("Cannot create range {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::FOR_EACH => {
+                    BinaryOperator::ForEach => {
                         if let func @ Value::Function(_) = right {
                             if let Some(mut iter) = left.iter() {
                                 while let Some(val) = iter.next(env)? {
@@ -184,27 +184,27 @@ impl Executable for Expression {
                         }
                     }
                     
-                    BinaryOperator::MAP => {
+                    BinaryOperator::Map => {
                         if let Value::Function(mat) = right {
                             Ok(Value::Map(Box::from(left), mat))
                         } else {
                             exec_err!("Cannot iterate over {} with {}", left, right)
                         }
                     }
-                    BinaryOperator::FILTER => {
+                    BinaryOperator::Filter => {
                         if let Value::Function(mat) = right {
                             Ok(Value::Filter(Box::from(left), mat))
                         } else {
                             exec_err!("Cannot filter over {} with {}", left, right)
                         }
                     }
-                    BinaryOperator::MOD => {
+                    BinaryOperator::Mod => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Int(left % right)),
                             _ => exec_err!("Cannot modulo {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::NOT_EQUAL => {
+                    BinaryOperator::NotEqual => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Boolean(left != right)),
                             (Value::Float(left), Value::Float(right)) => Ok(Value::Boolean(left != right)),
@@ -213,7 +213,7 @@ impl Executable for Expression {
                             _ => exec_err!("Cannot compare {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::EQUAL => {
+                    BinaryOperator::Equal => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Boolean(left == right)),
                             (Value::Float(left), Value::Float(right)) => Ok(Value::Boolean(left == right)),
@@ -222,7 +222,7 @@ impl Executable for Expression {
                             _ => exec_err!("Cannot compare {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::GREATER => {
+                    BinaryOperator::Greater => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Boolean(left > right)),
                             (Value::Float(left), Value::Float(right)) => Ok(Value::Boolean(left > right)),
@@ -230,7 +230,7 @@ impl Executable for Expression {
                             _ => exec_err!("Cannot compare {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::GREATER_EQUAL => {
+                    BinaryOperator::GreaterEqual => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Boolean(left >= right)),
                             (Value::Float(left), Value::Float(right)) => Ok(Value::Boolean(left >= right)),
@@ -238,7 +238,7 @@ impl Executable for Expression {
                             _ => exec_err!("Cannot compare {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::LESS => {
+                    BinaryOperator::Less => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Boolean(left < right)),
                             (Value::Float(left), Value::Float(right)) => Ok(Value::Boolean(left < right)),
@@ -246,7 +246,7 @@ impl Executable for Expression {
                             _ => exec_err!("Cannot compare {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::LESS_EQUAL => {
+                    BinaryOperator::LessEqual => {
                         match (&left, &right) {
                             (Value::Int(left), Value::Int(right)) => Ok(Value::Boolean(left <= right)),
                             (Value::Float(left), Value::Float(right)) => Ok(Value::Boolean(left <= right)),
@@ -254,19 +254,19 @@ impl Executable for Expression {
                             _ => exec_err!("Cannot compare {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::AND => {
+                    BinaryOperator::And => {
                         match (&left, &right) {
                             (Value::Boolean(left), Value::Boolean(right)) => Ok(Value::Boolean(*left && *right)),
                             _ => exec_err!("Cannot AND {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::OR => {
+                    BinaryOperator::Or => {
                         match (&left, &right) {
                             (Value::Boolean(left), Value::Boolean(right)) => Ok(Value::Boolean(*left || *right)),
                             _ => exec_err!("Cannot OR {} and {}", left, right),
                         }
                     }
-                    BinaryOperator::ALL => {
+                    BinaryOperator::All => {
                         if let Some(mut iter) = left.iter() {
                             while let Some(val) = iter.next(env)? {
                                 if let Value::Boolean(bl) = Expression::Call(
@@ -285,7 +285,7 @@ impl Executable for Expression {
                             exec_err!("Cannot &&& over {} with {}", left, right)
                         }
                     }
-                    BinaryOperator::ANY => {
+                    BinaryOperator::Any => {
                         if let Some(mut iter) = left.iter() {
                             while let Some(val) = iter.next(env)? {
                                 if let Value::Boolean(bl) = Expression::Call(
@@ -310,14 +310,14 @@ impl Executable for Expression {
                 let expression = expression.execute(env)?;
 
                 match operator {
-                    UnaryOperator::MINUS => {
+                    UnaryOperator::Minus => {
                         match expression {
                             Value::Int(value) => Ok(Value::Int(-value)),
                             Value::Float(value) => Ok(Value::Float(-value)),
                             _ => exec_err!("Cannot negate {}", expression),
                         }
                     }
-                    UnaryOperator::NOT => {
+                    UnaryOperator::Not => {
                         match expression {
                             Value::Boolean(value) => Ok(Value::Boolean(!value)),
                             _ => exec_err!("Cannot negate {}", expression),

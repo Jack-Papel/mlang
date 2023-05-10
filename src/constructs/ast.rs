@@ -5,58 +5,56 @@ pub struct Identifier {
     pub name: String,
 }
 
-#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum BinaryOperator {
-    RANGE,
-    FOR_EACH,
-    MAP,
-    FILTER,
-    ALL,
-    ANY,
-    NOT_EQUAL,
-    EQUAL,
-    GREATER,
-    GREATER_EQUAL,
-    LESS,
-    LESS_EQUAL,
-    AND,
-    OR,
-    MOD,
-    MUL,
-    DIV,
-    PLUS,
-    MINUS,
+    Range,
+    ForEach,
+    Map,
+    Filter,
+    All,
+    Any,
+    NotEqual,
+    Equal,
+    Greater,
+    GreaterEqual,
+    Less,
+    LessEqual,
+    And,
+    Or,
+    Mod,
+    Mul,
+    Div,
+    Plus,
+    Minus,
 }
 
 impl BinaryOperator {
     pub fn get_precedence_map() -> [Vec<BinaryOperator>; 10] {
         [
-            vec![BinaryOperator::RANGE],
-            vec![BinaryOperator::FOR_EACH, BinaryOperator::MAP, BinaryOperator::FILTER],
-            vec![BinaryOperator::ALL, BinaryOperator::ANY],
-            vec![BinaryOperator::MOD],
-            vec![BinaryOperator::MUL, BinaryOperator::DIV],
-            vec![BinaryOperator::PLUS, BinaryOperator::MINUS],
-            vec![BinaryOperator::NOT_EQUAL, BinaryOperator::EQUAL],
-            vec![BinaryOperator::GREATER, BinaryOperator::GREATER_EQUAL, BinaryOperator::LESS, BinaryOperator::LESS_EQUAL],
-            vec![BinaryOperator::AND],
-            vec![BinaryOperator::OR],
+            vec![BinaryOperator::Range],
+            vec![BinaryOperator::ForEach, BinaryOperator::Map, BinaryOperator::Filter],
+            vec![BinaryOperator::All, BinaryOperator::Any],
+            vec![BinaryOperator::Mod],
+            vec![BinaryOperator::Mul, BinaryOperator::Div],
+            vec![BinaryOperator::Plus, BinaryOperator::Minus],
+            vec![BinaryOperator::NotEqual, BinaryOperator::Equal],
+            vec![BinaryOperator::Greater, BinaryOperator::GreaterEqual, BinaryOperator::Less, BinaryOperator::LessEqual],
+            vec![BinaryOperator::And],
+            vec![BinaryOperator::Or],
         ]
     }
 }
 
-#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Debug, Clone)]
 pub enum UnaryOperator {
-    MINUS,
-    NOT,
+    Minus,
+    Not,
 }
 
 impl UnaryOperator {
     pub const VALUES : [UnaryOperator; 2] = [
-        UnaryOperator::MINUS, 
-        UnaryOperator::NOT
+        UnaryOperator::Minus, 
+        UnaryOperator::Not
     ];
 }
 

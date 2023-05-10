@@ -1,19 +1,20 @@
+use crate::constructs::token::symbol::builtin_symbols;
 use crate::prelude::*;
 use super::parse_ast::*;
 use super::token_queue::TokenQueue;
 use super::parse_match_expr::parse_match_expression;
-use crate::constructs::token::Token;
+use crate::constructs::token::{TokenKind, LiteralKind, Literal};
 use crate::constructs::ast::{Expression, BinaryOperator, Identifier};
 use crate::constructs::variable::{Value};
 
 #[derive(Debug)]
 enum ExpressionFragment {
     Parsed(Expression),
-    Unparsed(Token),
+    Unparsed(TokenKind),
 }
 
 pub fn parse_next_expression(token_queue: &mut TokenQueue, current_indent: usize) -> Result<Expression> {
-    let current_indent = if let Some(Token::NEWLINE(indent)) = token_queue.peek() {
+    let current_indent = if let Some(TokenKind::NEWLINE(indent)) = token_queue.peek() {
         let indent = *indent;
         token_queue.next();
         indent
@@ -32,7 +33,7 @@ pub fn parse_next_expression(token_queue: &mut TokenQueue, current_indent: usize
     evaluate_fragments_on_match_statements(&mut atoms)?;
 
     // Remove whitespace - it messes up the parsing
-    atoms.retain(|atom| !matches!(atom, ExpressionFragment::Unparsed(Token::NEWLINE(_))));
+    atoms.retain(|atom| !matches!(atom, ExpressionFragment::Unparsed(TokenKind::NEWLINE(_))));
     // Try to parse any singular parsable tokens.
     // This will make our life easier when doing calls
     for atom in atoms.iter_mut() {
@@ -63,11 +64,11 @@ pub fn parse_next_expression(token_queue: &mut TokenQueue, current_indent: usize
 }
 
 fn find_end_of_expression(token_queue: &mut TokenQueue, env_indent: usize) -> usize {
-    if let Some(Token::BAR(match_indent)) = token_queue.peek() {
+    if let Some(TokenKind::BAR(match_indent)) = token_queue.peek() {
         let match_indent = *match_indent;
         // We need to find the end of the match statement
         let mut length = 0;
-        while let Some(Token::BAR(indent)) = token_queue.peek() {
+        while let Some(TokenKind::BAR(indent)) = token_queue.peek() {
             if *indent != match_indent {
                 // We are no longer continuing to parse the match statement
                 break;
@@ -89,8 +90,8 @@ fn find_end_of_expression(token_queue: &mut TokenQueue, env_indent: usize) -> us
 
 fn evaluate_fragments_on_match_statements(atoms: &mut Vec<ExpressionFragment>) -> Result<()> {
     // First, find if there is a BAR token, and if so, evaluate the rest of the tokens into a match expression
-    if let Some((idx, ExpressionFragment::Unparsed(Token::BAR(indent)))) = atoms.iter().enumerate().find(|(_, partial)|
-        matches!(partial, ExpressionFragment::Unparsed(Token::BAR(_)))
+    if let Some((idx, ExpressionFragment::Unparsed(TokenKind::BAR(indent)))) = atoms.iter().enumerate().find(|(_, partial)|
+        matches!(partial, ExpressionFragment::Unparsed(TokenKind::BAR(_)))
     ) {
         let match_block = parse_match_expression(&mut TokenQueue::new( 
             &atoms.iter().skip(idx).map(|partial| {
@@ -113,21 +114,21 @@ fn evaluate_fragments_in_parentheses(atoms: &mut Vec<ExpressionFragment>, curren
     let mut depth = 0;
     while let Some((left_idx, token)) = atoms.iter().enumerate().find(|(_, partial)| {
         match partial {
-            ExpressionFragment::Unparsed(Token::LEFT_PAREN) => {
+            ExpressionFragment::Unparsed(TokenKind::LEFT_PAREN) => {
                 depth += 1;
                 true
             },
-            ExpressionFragment::Unparsed(Token::RIGHT_PAREN) => {
+            ExpressionFragment::Unparsed(TokenKind::RIGHT_PAREN) => {
                 depth -= 1;
                 false
             },
-            ExpressionFragment::Unparsed(Token::BAR(_)) => {
+            ExpressionFragment::Unparsed(TokenKind::BAR(_)) => {
                 depth == 0
             },
             _ => false,
         }
     }) {
-        if let ExpressionFragment::Unparsed(Token::BAR(_)) = token {
+        if let ExpressionFragment::Unparsed(TokenKind::BAR(_)) = token {
             // Don't evaluate parentheses inside match blocks
             break;
         }
@@ -135,11 +136,11 @@ fn evaluate_fragments_in_parentheses(atoms: &mut Vec<ExpressionFragment>, curren
         let mut depth = 0;
         if let Some((len_idx, _)) = atoms.iter().skip(left_idx).enumerate().find(|(_, partial)| {
             match partial {
-                ExpressionFragment::Unparsed(Token::LEFT_PAREN) => {
+                ExpressionFragment::Unparsed(TokenKind::LEFT_PAREN) => {
                     depth += 1;
                     false
                 },
-                ExpressionFragment::Unparsed(Token::RIGHT_PAREN) => {
+                ExpressionFragment::Unparsed(TokenKind::RIGHT_PAREN) => {
                     depth -= 1;
                     depth == 0
                 },
@@ -245,14 +246,10 @@ fn evaluate_fragments_on_calls(atoms: &mut Vec<ExpressionFragment>) -> Result<()
     Ok(())
 }
 
-pub fn parse_single_token(token: &Token) -> Result<Expression> {
+pub fn parse_single_token(token: &TokenKind) -> Result<Expression> {
     match token {
-        Token::IDENTIFIER(ident) => Ok(Expression::Identifier(Identifier { name: ident.to_string() })),
-        Token::STRING(str) => Ok(Expression::Literal(Value::String(str.to_string()))),
-        Token::INT(num) => Ok(Expression::Literal(Value::Int(*num))),
-        Token::FLOAT(num) => Ok(Expression::Literal(Value::Float(*num))),
-        Token::TRUE => Ok(Expression::Literal(Value::Boolean(true))),
-        Token::FALSE => Ok(Expression::Literal(Value::Boolean(false))),
+        TokenKind::IDENTIFIER(ident) => Ok(Expression::Identifier(Identifier { name: ident.get_str().to_string() })),
+        TokenKind::Literal(lit) => Ok(Expression::Literal(Value::try_from(*lit)?)),
         _ => parse_err!("Unexpected token: {:?}", token),
     }
 }

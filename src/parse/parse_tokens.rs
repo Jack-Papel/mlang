@@ -1,5 +1,6 @@
+use crate::constructs::token::symbol::{Symbol, builtin_symbols};
 use crate::prelude::*;
-use crate::constructs::token::Token;
+use crate::constructs::token::{TokenKind, LiteralKind, Literal};
 
 enum Parsing {
     Tokens,
@@ -7,10 +8,10 @@ enum Parsing {
     Number,
     SingleLineComment,
     MultilineComment,
-    Identifier,
+    Symbol,
 }
 
-pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
+pub fn tokenize(mlg_str: &str) -> Result<Vec<TokenKind>> {
     let mut tokens = Vec::new();
     let mut chars = mlg_str.chars().peekable();
 
@@ -27,7 +28,10 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
         match currently_parsing {
             Parsing::String => {
                 if '"' == c {
-                    tokens.push(Token::STRING(buf.clone()));
+                    tokens.push(TokenKind::Literal(Literal {
+                        kind: LiteralKind::String,
+                        symbol: Symbol::from(buf.as_str())
+                    }));
                     buf.clear();
                     // We need to do this manually because we're not using the loop
                     prev_two_chars = (Some('"'), prev_two_chars.0);
@@ -41,29 +45,19 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
                 if c.is_numeric() {
                     buf.push(c);
                 } else {
-                    if buf.contains('.') {
-                        tokens.push(Token::FLOAT(buf.parse().unwrap()));
-                    } else {
-                        tokens.push(Token::INT(buf.parse().unwrap()));
-                    }
+                    tokens.push(TokenKind::Literal(Literal {
+                        kind: if buf.contains('.') { LiteralKind::Float } else { LiteralKind::Int },
+                        symbol: Symbol::from(buf.as_str())
+                    }));
                     buf.clear();
                     currently_parsing = Parsing::Tokens;
                 }
             }
-            Parsing::Identifier => {
+            Parsing::Symbol => {
                 if c.is_alphanumeric() || '_' == c {
                     buf.push(c);
                 } else {
-                    match buf.as_str() {
-                        "let" => tokens.push(Token::LET),
-                        "struct" => tokens.push(Token::STRUCT),
-                        "impl" => tokens.push(Token::IMPL),
-                        "return" => tokens.push(Token::RETURN),
-                        "true" => tokens.push(Token::TRUE),
-                        "false" => tokens.push(Token::FALSE),
-                        "yield" => tokens.push(Token::YIELD),
-                        _ => tokens.push(Token::IDENTIFIER(buf.clone()))
-                    }
+                    tokens.push(get_token_from_symbol_string(&buf));
                     buf.clear();
                     currently_parsing = Parsing::Tokens;
                 }
@@ -84,82 +78,82 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
         }
         if let Parsing::Tokens = currently_parsing {
             match c {
-                '(' => tokens.push(Token::LEFT_PAREN),
-                ')' => tokens.push(Token::RIGHT_PAREN),
-                '[' => tokens.push(Token::LEFT_SQR_BRACE),
-                ']' => tokens.push(Token::RIGHT_SQR_BRACE),
-                ',' => tokens.push(Token::COMMA),
-                '-' => tokens.push(Token::MINUS),
-                '+' => tokens.push(Token::PLUS),
-                ';' => tokens.push(Token::SEMICOLON),
-                '$' => tokens.push(Token::DOLLAR),
-                '@' => tokens.push(Token::AT),
-                '#' => tokens.push(Token::HASH),
-                '~' => tokens.push(Token::TILDE),
-                '%' => tokens.push(Token::PERCENT),
-                '!' => tokens.push(Token::EXCLAMATION),
-                '>' => tokens.push(Token::GREATER),
-                '<' => tokens.push(Token::LESS),
+                '(' => tokens.push(TokenKind::LEFT_PAREN),
+                ')' => tokens.push(TokenKind::RIGHT_PAREN),
+                '[' => tokens.push(TokenKind::LEFT_SQR_BRACE),
+                ']' => tokens.push(TokenKind::RIGHT_SQR_BRACE),
+                ',' => tokens.push(TokenKind::COMMA),
+                '-' => tokens.push(TokenKind::MINUS),
+                '+' => tokens.push(TokenKind::PLUS),
+                ';' => tokens.push(TokenKind::SEMICOLON),
+                '$' => tokens.push(TokenKind::DOLLAR),
+                '@' => tokens.push(TokenKind::AT),
+                '#' => tokens.push(TokenKind::HASH),
+                '~' => tokens.push(TokenKind::TILDE),
+                '%' => tokens.push(TokenKind::PERCENT),
+                '!' => tokens.push(TokenKind::EXCLAMATION),
+                '>' => tokens.push(TokenKind::GREATER),
+                '<' => tokens.push(TokenKind::LESS),
                 '=' => match prev_two_chars {
                     (Some('='), _) => {
                         tokens.pop();
-                        tokens.push(Token::EQUAL_EQUAL)
+                        tokens.push(TokenKind::EQUAL_EQUAL)
                     },
                     (Some('!'), _) => {
                         tokens.pop();
-                        tokens.push(Token::EXCLAMATION_EQUAL)
+                        tokens.push(TokenKind::EXCLAMATION_EQUAL)
                     },
                     (Some('<'), _) => {
                         tokens.pop();
-                        tokens.push(Token::LESS_EQUAL)
+                        tokens.push(TokenKind::LESS_EQUAL)
                     },
                     (Some('>'), _) => {
                         tokens.pop();
-                        tokens.push(Token::GREATER_EQUAL)
+                        tokens.push(TokenKind::GREATER_EQUAL)
                     },
-                    _ => tokens.push(Token::EQUAL)
+                    _ => tokens.push(TokenKind::EQUAL)
                 }
                 '&' => match prev_two_chars {
                     (Some('&'), Some('&')) => {
                         tokens.pop();
-                        tokens.push(Token::TRIPLE_AMP)
+                        tokens.push(TokenKind::TRIPLE_AMP)
                     },
                     (Some('&'), _) => {
-                        tokens.push(Token::DOUBLE_AMP)
+                        tokens.push(TokenKind::DOUBLE_AMP)
                     }
                     _ => {}
                 }
                 '|' => match prev_two_chars {
                     (Some('|'), Some('|')) => {
                         tokens.pop();
-                        tokens.push(Token::TRIPLE_BAR)
+                        tokens.push(TokenKind::TRIPLE_BAR)
                     },
                     (Some('|'), _) => {
-                        tokens.push(Token::DOUBLE_BAR)
+                        tokens.push(TokenKind::DOUBLE_BAR)
                     }
-                    _ => tokens.push(Token::BAR(indent - 1))
+                    _ => tokens.push(TokenKind::BAR(indent - 1))
                 }
                 '.' => {
                     if let (Some('.'), _) = prev_two_chars {
                         tokens.pop();
-                        tokens.push(Token::DOT_DOT);
+                        tokens.push(TokenKind::DOT_DOT);
                     } else {
-                        tokens.push(Token::DOT);
+                        tokens.push(TokenKind::DOT);
                     }
                 }
                 ':' => {
                     if let (Some(':'), _) = prev_two_chars {
                         tokens.pop();
-                        tokens.push(Token::COLON_COLON);
+                        tokens.push(TokenKind::COLON_COLON);
                     } else {
-                        tokens.push(Token::COLON);
+                        tokens.push(TokenKind::COLON);
                     }
                 }
                 '*' => {
                     if let (Some('/'), _) = prev_two_chars {
                         currently_parsing = Parsing::MultilineComment;
                     } else {
-                        tokens.push(Token::STAR);
+                        tokens.push(TokenKind::STAR);
                     }
                 }
                 '"' => {
@@ -172,7 +166,7 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
                     buf.push(c);
                 }
                 'a'..='z' | 'A'..='Z' | '_' => {
-                    currently_parsing = Parsing::Identifier;
+                    currently_parsing = Parsing::Symbol;
                     buf.clear();
                     buf.push(c);
                 }
@@ -180,13 +174,13 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
                     if let (Some('/'), _) = prev_two_chars {
                         currently_parsing = Parsing::SingleLineComment;
                     } else {
-                        tokens.push(Token::SLASH);
+                        tokens.push(TokenKind::SLASH);
                     }
                 }
                 ' ' => {
-                    if let Some(Token::NEWLINE(_)) = tokens.last() {
+                    if let Some(TokenKind::NEWLINE(_)) = tokens.last() {
                         tokens.pop();
-                        tokens.push(Token::NEWLINE(indent - 1));
+                        tokens.push(TokenKind::NEWLINE(indent - 1));
                     }
                 }
                 '\t' => {
@@ -194,10 +188,10 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
                 }
                 '\r' => {}
                 '\n' => {
-                    if let Some(Token::NEWLINE(_)) = tokens.last() {
+                    if let Some(TokenKind::NEWLINE(_)) = tokens.last() {
                         tokens.pop();
                     }
-                    tokens.push(Token::NEWLINE(0));
+                    tokens.push(TokenKind::NEWLINE(0));
                     indent = 0;
                 }
                 _ => return parse_err!("Unexpected character: {}", c),
@@ -212,22 +206,34 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
     match currently_parsing {
         Parsing::String => return parse_err!("Unterminated string: {}", buf),
         Parsing::Number => {
-            if buf.contains('.') {
-                tokens.push(Token::FLOAT(buf.parse().unwrap()));
-            } else {
-                tokens.push(Token::INT(buf.parse().unwrap()));
-            }
+            tokens.push(TokenKind::Literal(Literal {
+                kind: if buf.contains('.') { LiteralKind::Float } else { LiteralKind::Int },
+                symbol: Symbol::from(buf.as_str())
+            }));
         },
-        Parsing::Identifier => {
-            tokens.push(Token::IDENTIFIER(buf));
+        Parsing::Symbol => {
+            tokens.push(get_token_from_symbol_string(&buf));
         },
         _ => {}
     }
     
     // Remove newline at the end of the file
-    if let Some(Token::NEWLINE(_)) = tokens.last() {
+    if let Some(TokenKind::NEWLINE(_)) = tokens.last() {
         tokens.pop();
     }
 
     Ok(tokens)
+}
+
+fn get_token_from_symbol_string(buf: &String) -> TokenKind {
+    match buf.as_str() {
+        "let" => TokenKind::Keyword(*builtin_symbols::LET),
+        "struct" => TokenKind::Keyword(*builtin_symbols::STRUCT),
+        "impl" => TokenKind::Keyword(*builtin_symbols::IMPL),
+        "return" => TokenKind::Keyword(*builtin_symbols::RETURN),
+        "true" => TokenKind::Literal(Literal {kind: LiteralKind::Bool, symbol: *builtin_symbols::TRUE}),
+        "false" => TokenKind::Literal(Literal {kind: LiteralKind::Bool, symbol: *builtin_symbols::FALSE}),
+        "yield" => TokenKind::Keyword(*builtin_symbols::YIELD),
+        _ => TokenKind::IDENTIFIER(Symbol::from(buf.as_str()))
+    }
 }

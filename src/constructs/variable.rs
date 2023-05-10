@@ -1,6 +1,9 @@
+use std::str::FromStr;
+
 use crate::prelude::*;
 use super::ast::Function;
 use super::iter::{MLGIter, FilterIter, MapIter, RangeIter, ListIter, CharIter};
+use super::token::{Literal, LiteralKind};
 use crate::interpret::execution::Env;
 
 
@@ -53,6 +56,21 @@ pub enum Value {
     Filter(Box<Value>, Function),
     Map(Box<Value>, Function),
     None,
+}
+
+impl TryFrom<Literal> for Value {
+    type Error = MLGErr;
+
+    fn try_from(lit: Literal) -> std::result::Result<Self, Self::Error> {
+        let symbol = lit.symbol.get_str();
+
+        Ok(match lit.kind {
+            LiteralKind::String => Value::String(symbol.to_string()),
+            LiteralKind::Int => Value::Int(symbol.parse().or(parse_err!("Failed to parse int {}", symbol))?),
+            LiteralKind::Float => Value::Float(symbol.parse().or(parse_err!("Failed to parse float {}", symbol))?),
+            LiteralKind::Bool => Value::Boolean(symbol.parse().or(parse_err!("Failed to parse bool {}", symbol))?),
+        })
+    }
 }
 
 impl Value {

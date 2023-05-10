@@ -1,10 +1,10 @@
 use std::fmt::Debug;
 
-use crate::constructs::token::Token;
+use crate::constructs::token::TokenKind;
 
 #[derive(Clone)]
 pub struct TokenQueue<'a> {
-    tokens: &'a Vec<Token>,
+    tokens: &'a Vec<TokenKind>,
     index: usize,
     end: usize,
 }
@@ -21,7 +21,7 @@ impl<'a> Debug for TokenQueue<'a> {
 }
 
 impl<'a> Iterator for TokenQueue<'a> {
-    type Item = &'a Token;
+    type Item = &'a TokenKind;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.index >= self.end {
@@ -34,7 +34,7 @@ impl<'a> Iterator for TokenQueue<'a> {
 }
 
 impl<'a> TokenQueue<'a> {
-    pub fn new(tokens: &Vec<Token>) -> TokenQueue {
+    pub fn new(tokens: &Vec<TokenKind>) -> TokenQueue {
         TokenQueue {
             tokens,
             index: 0,
@@ -42,14 +42,14 @@ impl<'a> TokenQueue<'a> {
         }
     }
 
-    pub fn peek(&self) -> Option<&Token> {
+    pub fn peek(&self) -> Option<&TokenKind> {
         if self.index >= self.end {
             return None;
         }
         self.tokens.get(self.index)
     }
 
-    pub fn peek_n(&self, n: isize) -> Option<&Token> {
+    pub fn peek_n(&self, n: isize) -> Option<&TokenKind> {
         self.tokens.get((self.index as isize + n) as usize)
     }
 

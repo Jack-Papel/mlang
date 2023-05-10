@@ -2,7 +2,7 @@ use crate::prelude::*;
 use super::token_queue::TokenQueue;
 use super::parse_expr::{parse_next_expression, parse_single_token};
 use super::parse_ast::{parse_block, parse_next_statement, find_end_of_block};
-use crate::constructs::token::Token;
+use crate::constructs::token::TokenKind;
 use crate::constructs::ast::*;
 use crate::constructs::variable::*;
 
@@ -17,7 +17,7 @@ pub fn parse_match_expression(token_queue: &mut TokenQueue, current_indent: usiz
         }
         let pattern;
 
-        if let Some(Token::BAR(indent)) = token_queue.next() {
+        if let Some(TokenKind::BAR(indent)) = token_queue.next() {
             if *indent != current_indent {
                 return parse_err!("Expected match arm to be indented");
             }
@@ -26,7 +26,7 @@ pub fn parse_match_expression(token_queue: &mut TokenQueue, current_indent: usiz
         }
 
         if let Some((idx, token)) = token_queue.clone().enumerate().find(|(_, token)| {
-            matches!(token, Token::COLON)
+            matches!(token, TokenKind::COLON)
         }) {
             if idx > end {
                 return parse_err!("Expected colon after match pattern");
@@ -38,7 +38,7 @@ pub fn parse_match_expression(token_queue: &mut TokenQueue, current_indent: usiz
 
         token_queue.next(); // Skip the COLON
 
-        let block = if let Some(Token::NEWLINE(_)) = token_queue.peek() {
+        let block = if let Some(TokenKind::NEWLINE(_)) = token_queue.peek() {
             token_queue.next();
             parse_block(token_queue, current_indent + 1)?
         } else {
@@ -61,7 +61,7 @@ pub fn parse_match_expression(token_queue: &mut TokenQueue, current_indent: usiz
 
 fn parse_pattern(token_queue: &mut TokenQueue) -> Result<Pattern> {
     if let Some((idx, _)) = token_queue.clone().enumerate().find(|(_, token)| {
-        matches!(token, Token::TILDE)
+        matches!(token, TokenKind::TILDE)
     }) {
         let mut identifier = None;
         let mut typ = None;

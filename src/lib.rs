@@ -10,6 +10,7 @@ pub mod prelude {
     pub enum MLGErr {
         ParseErr(String),
         ExecErr(String),
+        CompilerErr(String),
     }
 
     impl ToString for MLGErr {
@@ -17,6 +18,7 @@ pub mod prelude {
             match self {
                 Self::ParseErr(s) => format!("Failed to parse: {}", s),
                 Self::ExecErr(s) => format!("Failed to execute: {}", s),
+                Self::CompilerErr(s) => format!("Failed to compile: {}", s),
             }
         }
     }
