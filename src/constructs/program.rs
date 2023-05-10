@@ -13,7 +13,7 @@ impl Program {
     }
 
     pub fn run(&self, output: &mut String) -> Result<()> {
-        println!("Running program");
+        println!("Running program\n");
         let mut env = Env::new();
         let result = self.block.execute(&mut env);
 

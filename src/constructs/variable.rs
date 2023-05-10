@@ -112,6 +112,7 @@ impl Value {
 #[derive(Debug, Clone)]
 pub enum Builtin {
     Print,
+    Println,
     Assert
 }
 
@@ -119,6 +120,10 @@ impl Builtin {
     pub fn execute(&self, value: Value, env: &mut Env) -> Result<Value> {
         match self {
             Self::Print => {
+                env.print(format!("{}", value))?;
+                Ok(Value::None)
+            }
+            Self::Println => {
                 env.print(format!("{}\n", value))?;
                 Ok(Value::None)
             }

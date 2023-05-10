@@ -54,7 +54,13 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
                     currently_parsing = Parsing::Tokens;
                     continue;
                 } else {
-                    buf.push(c);
+                    match (buf.chars().last(), c) {
+                        (Some('\\'), 'n') => {
+                            buf.pop();
+                            buf.push('\n')
+                        },
+                        _ => buf.push(c)
+                    }
                 }
             }
             Parsing::Number => {

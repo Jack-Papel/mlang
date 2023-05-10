@@ -100,5 +100,6 @@ pre_intern! {
     FALSE: "false",
     // Intrinsics
     PRINT: "print",
+    PRINTLN: "print",
     ASSERT: "assert"
 }

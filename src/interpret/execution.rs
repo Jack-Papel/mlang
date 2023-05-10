@@ -16,6 +16,7 @@ impl<'a> Env<'a> {
         let mut ident_map = HashMap::new();
         // Special values
         ident_map.insert("print".to_string(), Value::Function(Function::Builtin(Builtin::Print)));
+        ident_map.insert("println".to_string(), Value::Function(Function::Builtin(Builtin::Println)));
         ident_map.insert("assert".to_string(), Value::Function(Function::Builtin(Builtin::Assert)));
         Env {
             ident_map,
