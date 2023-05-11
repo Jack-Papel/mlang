@@ -3,11 +3,11 @@ use super::ast::Block;
 use crate::interpret::execution::{Executable, Env};
 
 #[derive(Debug, Clone)]
-pub struct Program {
+pub struct UnverifiedProgram {
     pub block: Block,
 }
 
-impl Program {
+impl UnverifiedProgram {
     pub fn new(program: String) -> Result<Self> {
         crate::parse::parse(program)
     }

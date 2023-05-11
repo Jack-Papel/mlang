@@ -2,6 +2,8 @@ pub mod parse;
 pub mod interpret;
 pub mod constructs;
 pub use constructs::program;
+pub mod tokenize;
+pub mod verify;
 
 pub mod prelude {
     use crate::constructs::token::span::Span;
@@ -10,7 +12,8 @@ pub mod prelude {
 
     #[derive(Debug, Clone)]
     pub enum MLGErr {
-        ParseErr(Option<Span>, String),
+        SyntaxErr(Option<Span>, String),
+        SemanticErr(Option<Span>, String),
         ExecErr(String),
         CompilerErr(String),
     }
@@ -18,20 +21,29 @@ pub mod prelude {
     impl ToString for MLGErr {
         fn to_string(&self) -> String {
             match self {
-                Self::ParseErr(span, s) => format!("Failed to parse: {}", s),
+                Self::SyntaxErr(_, s) => format!("Invalid syntax: {}", s),
+                Self::SemanticErr(_, s) => format!("Error: {}", s),
                 Self::ExecErr(s) => format!("Failed to execute: {}", s),
                 Self::CompilerErr(s) => format!("Failed to compile: {}", s),
             }
         }
     }
 
-    macro_rules! parse_err {
-        ($span:expr, $($args:tt)*) => (Err(MLGErr::ParseErr($span, format!($($args)*))))
+    macro_rules! syntax_err {
+        ($span:expr, $($args:tt)*) => (Err(MLGErr::SyntaxErr($span, format!($($args)*))))
+    }
+
+    macro_rules! semantic_err {
+        ($span:expr, $($args:tt)*) => (Err(MLGErr::SyntaxErr($span, format!($($args)*))))
     }
 
     macro_rules! exec_err {
         ($($arg:tt)*) => (Err(MLGErr::ExecErr(format!($($arg)*))))
     }
 
-    pub(crate) use {parse_err, exec_err};
+    macro_rules! compiler_err {
+        ($($arg:tt)*) => (Err(MLGErr::ExecErr(format!($($arg)*))))
+    }
+
+    pub(crate) use {syntax_err, semantic_err, exec_err, compiler_err};
 }

@@ -5,6 +5,8 @@ pub mod span;
 use span::Span;
 pub mod symbol;
 use symbol::Symbol;
+mod tokens;
+pub use tokens::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token (pub TokenKind, pub Span);
@@ -88,7 +90,7 @@ impl TokenKind {
             TokenKind::Slash => Ok(BinaryOperator::Div),
             TokenKind::Plus => Ok(BinaryOperator::Plus),
             TokenKind::Minus => Ok(BinaryOperator::Minus),
-            _ => parse_err!(span, "\"{self:?}\" is not a binary operator"),
+            _ => semantic_err!(span, "\"{self:?}\" is not a binary operator"),
         }
     }
 
@@ -96,7 +98,7 @@ impl TokenKind {
         match self {
             TokenKind::Minus => Ok(UnaryOperator::Minus),
             TokenKind::Exclamation => Ok(UnaryOperator::Not),
-            _ => parse_err!(span, "\"{self:?}\" is not a unary operator"),
+            _ => semantic_err!(span, "\"{self:?}\" is not a unary operator"),
         }
     }
 }

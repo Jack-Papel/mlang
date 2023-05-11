@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::Read;
 
 use mlang::prelude::*;
-use mlang::program::Program;
+use mlang::program::UnverifiedProgram;
 
 fn main() -> Result<()> {
     print!("\x1Bc"); // Clear terminal
@@ -14,7 +14,7 @@ fn main() -> Result<()> {
 
     let mut output_str = String::new();
 
-    Program::new(mlg_str.clone())
+    UnverifiedProgram::new(mlg_str.clone())
         .unwrap_or_else(|error| error_handling::handle(mlg_str.clone(), error))
         .run(&mut output_str)
         .unwrap_or_else(|error| error_handling::handle(mlg_str.clone(), error));
@@ -31,7 +31,7 @@ mod error_handling {
 
     pub fn handle(input_string: String, error: MLGErr) -> ! {
         match error {
-            MLGErr::ParseErr(Some(span), ..) => {
+            MLGErr::SyntaxErr(Some(span), ..) => {
                 show_error_location(&input_string, span)
             }
             _ => {}

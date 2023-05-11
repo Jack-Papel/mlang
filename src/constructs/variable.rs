@@ -65,9 +65,9 @@ impl TryFrom<(Literal, Span)> for Value {
 
         Ok(match lit.kind {
             LiteralKind::String => Value::String(symbol.to_string()),
-            LiteralKind::Int => Value::Int(symbol.parse().or(parse_err!(Some(span), "Failed to parse int {}", symbol))?),
-            LiteralKind::Float => Value::Float(symbol.parse().or(parse_err!(Some(span), "Failed to parse float {}", symbol))?),
-            LiteralKind::Bool => Value::Boolean(symbol.parse().or(parse_err!(Some(span), "Failed to parse bool {}", symbol))?),
+            LiteralKind::Int => Value::Int(symbol.parse().or(syntax_err!(Some(span), "Failed to parse int {}", symbol))?),
+            LiteralKind::Float => Value::Float(symbol.parse().or(syntax_err!(Some(span), "Failed to parse float {}", symbol))?),
+            LiteralKind::Bool => Value::Boolean(symbol.parse().or(syntax_err!(Some(span), "Failed to parse bool {}", symbol))?),
         })
     }
 }

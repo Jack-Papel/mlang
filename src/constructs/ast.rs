@@ -1,4 +1,4 @@
-use super::variable::{Builtin, Value, Type};
+use super::{variable::{Builtin, Value, Type}};
 
 #[derive(Debug, Clone)]
 pub struct Identifier {

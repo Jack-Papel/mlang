@@ -1,11 +1,10 @@
 use crate::constructs::token::span::Span;
 use crate::prelude::*;
 use super::parse_ast::*;
-use super::token_queue::TokenQueue;
 use super::parse_match_expr::parse_match_expression;
-use crate::constructs::token::{TokenKind, Token};
+use crate::constructs::token::{TokenKind, Token, Tokens};
 use crate::constructs::ast::{Expression, BinaryOperator, Identifier};
-use crate::constructs::variable::{Value};
+use crate::constructs::variable::Value;
 
 #[derive(Debug)]
 enum ExpressionFragment {
@@ -22,18 +21,18 @@ impl ExpressionFragment {
     }
 }
 
-pub fn parse_next_expression(token_queue: &mut TokenQueue, current_indent: usize) -> Result<Expression> {
-    let current_indent = if let Some(Token(TokenKind::Newline(indent), ..)) = token_queue.peek() {
+pub fn parse_next_expression(tokens: &mut Tokens, current_indent: usize) -> Result<Expression> {
+    let current_indent = if let Some(Token(TokenKind::Newline(indent), ..)) = tokens.peek() {
         let indent = *indent;
-        token_queue.next();
+        tokens.next();
         indent
     } else {
         current_indent
     };
     
-    let end = find_end_of_expression(&mut token_queue.clone(), current_indent);
+    let end = find_end_of_expression(&mut tokens.clone(), current_indent);
 
-    let mut atoms: Vec<ExpressionFragment> = token_queue.take(end)
+    let mut atoms: Vec<ExpressionFragment> = tokens.take(end)
         .map(|token| ExpressionFragment::Unparsed(token.clone()))
         .collect();
         
@@ -72,38 +71,38 @@ pub fn parse_next_expression(token_queue: &mut TokenQueue, current_indent: usize
         // This is a big old mess
         if let Some(first_frag) = atoms.get(0) {
             if let Some(second_frag) = atoms.last() {
-                parse_err!(Some(first_frag.span() + second_frag.span()), "Failed to parse into singular expression. Got: {:?}", atoms)
+                syntax_err!(Some(first_frag.span() + second_frag.span()), "Failed to parse into singular expression. Got: {:?}", atoms)
             } else {
                 unreachable!("atoms is guaranteed to have at least one element!")
             }
         } else {
-            parse_err!(None, "Failed to parse into singular expression. Got: {:?}", atoms)
+            syntax_err!(None, "Failed to parse into singular expression. Got: {:?}", atoms)
         }
     }
 }
 
-fn find_end_of_expression(token_queue: &mut TokenQueue, env_indent: usize) -> usize {
-    if let Some(Token(TokenKind::Bar(match_indent), ..)) = token_queue.peek() {
+fn find_end_of_expression(tokens: &mut Tokens, env_indent: usize) -> usize {
+    if let Some(Token(TokenKind::Bar(match_indent), ..)) = tokens.peek() {
         let match_indent = *match_indent;
         // We need to find the end of the match statement
         let mut length = 0;
-        while let Some(Token(TokenKind::Bar(indent), ..)) = token_queue.peek() {
+        while let Some(Token(TokenKind::Bar(indent), ..)) = tokens.peek() {
             if *indent != match_indent {
                 // We are no longer continuing to parse the match statement
                 break;
             }
-            let block_length = find_end_of_block(&mut token_queue.clone(), match_indent + 1);
+            let block_length = find_end_of_block(&mut tokens.clone(), match_indent + 1);
             length += block_length;
-            token_queue.skip(block_length);
+            tokens.skip(block_length);
             // Skip newline
-            token_queue.next();
+            tokens.next();
             length += 1;
         }
 
         // Remove the last newline we accounted for
         length - 1
     } else {
-        find_end_of_block(token_queue, env_indent + 1)
+        find_end_of_block(tokens, env_indent + 1)
     }
 }
 
@@ -112,7 +111,7 @@ fn evaluate_fragments_on_match_statements(atoms: &mut Vec<ExpressionFragment>) -
     if let Some((idx, ExpressionFragment::Unparsed(Token(TokenKind::Bar(indent), span)))) = atoms.iter().enumerate().find(|(_, partial)|
         matches!(partial, ExpressionFragment::Unparsed(Token(TokenKind::Bar(_), ..)))
     ) {
-        let match_block = parse_match_expression(&mut TokenQueue::new( 
+        let match_block = parse_match_expression(&mut Tokens::new(
             &atoms.iter().skip(idx).map(|partial| {
                 match partial {
                     ExpressionFragment::Unparsed(token) => token.clone(),
@@ -175,7 +174,7 @@ fn evaluate_fragments_in_parentheses(atoms: &mut Vec<ExpressionFragment>, curren
                 }
             }).collect();
 
-            let mut subqueue = TokenQueue::new(&subexpression_tokens);
+            let mut subqueue = Tokens::new(&subexpression_tokens);
             
             // Get span
             // This is a big old mess
@@ -186,7 +185,7 @@ fn evaluate_fragments_in_parentheses(atoms: &mut Vec<ExpressionFragment>, curren
                     unreachable!("subexpression_tokens is guaranteed to have at least one element!")
                 }
             } else {
-                return parse_err!(Some(token.span().after()), "Expected expression inside parentheses");
+                return syntax_err!(Some(token.span().after()), "Expected expression inside parentheses");
             };
 
             let expr = parse_next_expression(&mut subqueue, current_indent)?;
@@ -195,7 +194,7 @@ fn evaluate_fragments_in_parentheses(atoms: &mut Vec<ExpressionFragment>, curren
             atoms.drain((left_idx + 1)..(left_idx + len_idx + 1));
 
         } else {
-            return parse_err!(Some(token.span()), "Expected closing parenthesis");
+            return syntax_err!(Some(token.span()), "Expected closing parenthesis");
         }
     }
 
@@ -213,7 +212,7 @@ fn apply_unary_operator_if_present(atoms: &mut Vec<ExpressionFragment>) -> Resul
                     Box::new(expr.clone())
                 ), first_span + *span);
             } else {
-                return parse_err!(Some(first_span.after()), "Expected parsed expression after unary operator. Got: {:?}", atoms.get(0));
+                return syntax_err!(Some(first_span.after()), "Expected parsed expression after unary operator. Got: {:?}", atoms.get(0));
             }
         }
     }
@@ -252,13 +251,13 @@ fn get_binary_operands(atoms: &[ExpressionFragment], idx: usize) -> Result<(Expr
     let left = match &atoms.get(idx - 1) {
         Some(ExpressionFragment::Parsed(expr, ..)) => expr.clone(),
         Some(ExpressionFragment::Unparsed(token)) => parse_single_token(token)?,
-        None => return parse_err!(Some(atoms[idx].span().after()), "Expected expression before binary operator {:?}", atoms[idx]),
+        None => return syntax_err!(Some(atoms[idx].span().after()), "Expected expression before binary operator {:?}", atoms[idx]),
     };
 
     let right = match &atoms.get(idx + 1) {
         Some(ExpressionFragment::Parsed(expr, ..)) => expr.clone(),
         Some(ExpressionFragment::Unparsed(token)) => parse_single_token(token)?,
-        None => return parse_err!(Some(atoms[idx].span().after()), "Expected expression after binary operator {:?}", atoms[idx]),
+        None => return syntax_err!(Some(atoms[idx].span().after()), "Expected expression after binary operator {:?}", atoms[idx]),
     };
 
     Ok((left, right))
@@ -284,6 +283,6 @@ pub fn parse_single_token(token: &Token) -> Result<Expression> {
     match token.0 {
         TokenKind::Identifier(ident) => Ok(Expression::Identifier(Identifier { name: ident.get_str().to_string() })),
         TokenKind::Literal(lit) => Ok(Expression::Literal(Value::try_from((lit, token.1))?)),
-        _ => parse_err!(Some(token.1), "Unexpected token"),
+        _ => syntax_err!(Some(token.1), "Unexpected token"),
     }
 }

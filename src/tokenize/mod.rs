@@ -12,7 +12,7 @@ enum Parsing {
     Symbol,
 }
 
-pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
+pub fn parse_tokens<'a>(mlg_str: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
     let mut chars = mlg_str.chars().peekable();
 
@@ -220,7 +220,7 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
                     }
                 }
                 '\t' => {
-                    return parse_err!(Some(Span::unit(index)), "Tabs are currently not allowed. Use spaces instead.");
+                    return syntax_err!(Some(Span::unit(index)), "Tabs are currently not allowed. Use spaces instead.");
                 }
                 '\r' => {}
                 '\n' => {
@@ -230,7 +230,7 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
                     push_token!(TokenKind::Newline(0), 0);
                     indent = 0;
                 }
-                _ => return parse_err!(Some(Span::unit(index)), "Unexpected character: {}", c),
+                _ => return syntax_err!(Some(Span::unit(index)), "Unexpected character: {}", c),
             }
         }
         
@@ -240,7 +240,7 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
     }
 
     match currently_parsing {
-        Parsing::String => return parse_err!(Some(Span { 
+        Parsing::String => return syntax_err!(Some(Span { 
             index: (mlg_str.len() - buf.len()) as u32,
             len: buf.len() as u16
         }), "Unterminated string: {}", buf),
@@ -274,7 +274,7 @@ pub fn tokenize(mlg_str: &str) -> Result<Vec<Token>> {
     }
 
     if let Some(token) = tokens.iter().find(|tok| tok.0 == TokenKind::Amp) {
-        return parse_err!(Some(token.1), "Ampersands are not currently supported!");
+        return syntax_err!(Some(token.1), "Ampersands are not currently supported!");
     }
 
     Ok(tokens)

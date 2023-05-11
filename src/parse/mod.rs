@@ -1,12 +1,13 @@
 pub(self) mod parse_ast;
 pub(self) mod parse_expr;
 pub(self) mod parse_match_expr;
-pub(self) mod parse_tokens;
-pub(self) mod token_queue;
 
+use crate::constructs::token::Tokens;
 use crate::prelude::*;
-use crate::program::Program;
+use crate::program::UnverifiedProgram;
 
-pub fn parse(source: String) -> Result<Program> {
-    parse_ast::to_ast(parse_tokens::tokenize(&source)?)
+pub fn parse(source: String) -> Result<UnverifiedProgram> {
+    let parsed_tokens = crate::tokenize::parse_tokens(&source)?;
+
+    parse_ast::to_ast(&mut Tokens::new(&parsed_tokens))
 }

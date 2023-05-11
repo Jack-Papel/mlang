@@ -3,13 +3,13 @@ use std::fmt::Debug;
 use crate::constructs::token::Token;
 
 #[derive(Clone)]
-pub struct TokenQueue<'a> {
+pub struct Tokens<'a> {
     tokens: &'a Vec<Token>,
     index: usize,
     end: usize,
 }
 
-impl<'a> Debug for TokenQueue<'a> {
+impl<'a> Debug for Tokens<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("TokenQueue: ")?;
         if self.index >= self.end {
@@ -20,7 +20,7 @@ impl<'a> Debug for TokenQueue<'a> {
     }
 }
 
-impl<'a> Iterator for TokenQueue<'a> {
+impl<'a> Iterator for Tokens<'a> {
     type Item = &'a Token;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -33,10 +33,10 @@ impl<'a> Iterator for TokenQueue<'a> {
     }
 }
 
-impl<'a> TokenQueue<'a> {
-    pub fn new(tokens: &Vec<Token>) -> TokenQueue {
-        TokenQueue {
-            tokens,
+impl<'a> Tokens<'a> {
+    pub fn new(tokens: &Vec<Token>) -> Tokens {
+        Tokens {
+            tokens: &tokens,
             index: 0,
             end: tokens.len(),
         }
@@ -57,8 +57,8 @@ impl<'a> TokenQueue<'a> {
         self.index += n;
     }
 
-    pub fn take(&mut self, n: usize) -> TokenQueue {
-        let queue = TokenQueue {
+    pub fn take(&mut self, n: usize) -> Tokens {
+        let queue = Tokens {
             tokens: self.tokens,
             index: self.index,
             end: self.index + n,

@@ -1,25 +1,22 @@
 use crate::constructs::token::span::Span;
 use crate::constructs::token::symbol::builtin_symbols;
 use crate::prelude::*;
-use super::token_queue::TokenQueue;
 use crate::constructs::ast::*;
-use crate::constructs::program::Program;
-use crate::constructs::token::{TokenKind, Token};
+use crate::constructs::program::UnverifiedProgram;
+use crate::constructs::token::{TokenKind, Token, Tokens};
 use super::parse_expr::parse_next_expression;
 
-pub fn to_ast(tokens: Vec<Token>) -> Result<Program> {
-    let mut token_queue = TokenQueue::new(&tokens);
-
-    Ok(Program { 
-        block: parse_block(&mut token_queue, 0)? 
+pub fn to_ast(tokens: &mut Tokens) -> Result<UnverifiedProgram> {
+    Ok(UnverifiedProgram { 
+        block: parse_block(tokens, 0)? 
     })
 }
 
-pub fn find_end_of_block(token_queue: &mut TokenQueue, block_indent: usize) -> usize {
+pub fn find_end_of_block(tokens: &mut Tokens, block_indent: usize) -> usize {
     let mut length = 0;
     // An block ends when the next line has a lower indentation than the current line
     loop {
-        match token_queue.next() {
+        match tokens.next() {
             Some(Token(TokenKind::Newline(indent), ..)) => {
                 if *indent < block_indent {
                     return length;
@@ -32,79 +29,79 @@ pub fn find_end_of_block(token_queue: &mut TokenQueue, block_indent: usize) -> u
     }
 }
 
-pub fn parse_block(token_queue: &mut TokenQueue, block_indent: usize) -> Result<Block> {
+pub fn parse_block(tokens: &mut Tokens, block_indent: usize) -> Result<Block> {
     let mut statements = Vec::new();
-    let end = find_end_of_block(&mut token_queue.clone(), block_indent);
-    let mut token_queue = token_queue.take(end);
+    let end = find_end_of_block(&mut tokens.clone(), block_indent);
+    let mut tokens = tokens.take(end);
 
-    while let Some(token) = token_queue.peek() {
+    while let Some(token) = tokens.peek() {
         if let Token(TokenKind::Newline(_), ..) = token {
-            token_queue.next();
+            tokens.next();
             continue;
         }
 
-        statements.push(parse_next_statement(&mut token_queue, block_indent)?);
+        statements.push(parse_next_statement(&mut tokens, block_indent)?);
     }
 
     if statements.is_empty() {
-        if let Some(Token(.., Span { index, len })) = token_queue.last() {
-            return parse_err!(Some(Span { 
+        if let Some(Token(.., Span { index, len })) = tokens.last() {
+            return syntax_err!(Some(Span { 
                 index: index + *len as u32, 
                 len: 1
             }), "Expected block");
         } else {
-            return parse_err!(None, "Expected block");
+            return syntax_err!(None, "Expected block");
         }
     }
 
     Ok(Block { statements })
 }
 
-pub fn parse_next_statement(token_queue: &mut TokenQueue, current_indent: usize) -> Result<Statement> {
-    match token_queue.peek() {
+pub fn parse_next_statement(tokens: &mut Tokens, current_indent: usize) -> Result<Statement> {
+    match tokens.peek() {
         Some(Token(TokenKind::Keyword(symbol), ..)) if *symbol == *builtin_symbols::LET => {
-            let ident = match token_queue.peek_n(1) {
+            let ident = match tokens.peek_n(1) {
                 Some(Token(TokenKind::Identifier(ident), ..)) => ident.get_str().to_string(),
-                Some(Token(.., span)) => return parse_err!(Some(*span), "Expected identifier after let"),
-                None => return parse_err!(None, "Unexpected end of assignment expression")
+                Some(Token(.., span)) => return syntax_err!(Some(*span), "Expected identifier after let"),
+                None => return syntax_err!(None, "Unexpected end of assignment expression")
             };
 
-            token_queue.skip(3);
-            let expression = parse_next_expression(token_queue, current_indent)?;
+            tokens.skip(3);
+            let expression = parse_next_expression(tokens, current_indent)?;
             Ok(Statement::Let(Identifier { name: ident }, expression))
         },
         Some(Token(TokenKind::Keyword(symbol), ..)) if *symbol == *builtin_symbols::RETURN => {
-            token_queue.skip(1);
-            let expression = parse_next_expression(token_queue, current_indent)?;
+            tokens.skip(1);
+            let expression = parse_next_expression(tokens, current_indent)?;
             Ok(Statement::Return(expression))
         },
         Some(Token(TokenKind::Identifier(ident), ..)) => {
             let ident = ident.get_str().to_string();
-            if let Some(Token(TokenKind::Equal, ..)) = token_queue.peek_n(1) {
-                token_queue.skip(2);
-                let expression = parse_next_expression(token_queue, current_indent)?;
+            if let Some(Token(TokenKind::Equal, ..)) = tokens.peek_n(1) {
+                tokens.skip(2);
+                let expression = parse_next_expression(tokens, current_indent)?;
                 Ok(Statement::Set(Identifier { name: ident }, expression))
             } else {
-                let expression = parse_next_expression(token_queue, current_indent)?;
+                let expression = parse_next_expression(tokens, current_indent)?;
                 Ok(Statement::Expression(expression))
             }
         }
         Some(Token(TokenKind::Newline(_), span)) => {
             // This should technically be unreachable
-            parse_err!(Some(*span), "Unexpected newline")
+            compiler_err!("Unexpected newline at {:?}", span)
         }
         Some(_) => {
-            let expression = parse_next_expression(token_queue, current_indent)?;
+            let expression = parse_next_expression(tokens, current_indent)?;
             Ok(Statement::Expression(expression))
         }
         None => {
-            if let Some(Token(.., Span { index, len })) = token_queue.last() {
-                parse_err!(Some(Span { 
+            if let Some(Token(.., Span { index, len })) = tokens.last() {
+                syntax_err!(Some(Span { 
                     index: index + *len as u32, 
                     len: 1
                 }), "Expected statement")
             } else {
-                parse_err!(None, "Expected statement")
+                syntax_err!(None, "Expected statement")
             }
         }
     }

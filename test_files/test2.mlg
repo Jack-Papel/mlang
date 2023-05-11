@@ -14,10 +14,7 @@ let is_prime = | num ~ num < 2 : false
 
 1..101 $ | num :
            let out = ""
-           (|~ num % 3 == 0:
-              out = out + "fizz")
-           (|~ num % 5 == 0: 
-              out = out + "buzz")
-           (|~ out == "":
-              out = num)
+           (|~ num % 3 == 0: out = out + "fizz")
+           (|~ num % 5 == 0: out = out + "buzz")
+           (|~ out == "": out = num)
            out println
