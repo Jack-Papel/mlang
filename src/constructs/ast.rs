@@ -1,8 +1,6 @@
 use super::variable::{Builtin, Value, Type};
 
-pub struct AST {
-    pub block: Block
-}
+pub struct AST(pub Block);
 
 #[derive(Debug, Clone)]
 pub struct Identifier {

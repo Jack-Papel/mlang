@@ -76,7 +76,7 @@ impl Program<Ready> {
     pub fn run(&self) -> Result<String, String> {
         let mut output = String::new();
         let mut env = Env::new();
-        let result = self.data.block.execute(&mut env);
+        let result = self.data.0.execute(&mut env);
 
         env.write_to_string(&mut output);
 

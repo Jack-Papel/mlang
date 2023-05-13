@@ -7,7 +7,5 @@ use crate::constructs::token::Tokens;
 use crate::prelude::*;
 
 pub fn parse(tokens: &mut Tokens) -> Result<AST, CompilationError> {
-    Ok(AST { 
-        block: parse_ast::parse_block(tokens, 0)? 
-    })
+    Ok(AST(parse_ast::parse_block(tokens, 0)?))
 }
