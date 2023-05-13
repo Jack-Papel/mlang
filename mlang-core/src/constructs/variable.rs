@@ -1,9 +1,7 @@
 use crate::prelude::*;
 use super::ast::Function;
-use super::iter::{MLGIter, FilterIter, MapIter, RangeIter, ListIter, CharIter};
 use super::token::span::Span;
 use super::token::{Literal, LiteralKind};
-use crate::interpret::environment::Env;
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -58,7 +56,7 @@ pub enum Value {
 }
 
 impl TryFrom<(Literal, Span)> for Value {
-    type Error = CompilationError;
+    type Error = MLGError;
 
     fn try_from((lit, span): (Literal, Span)) -> std::result::Result<Self, Self::Error> {
         let symbol = lit.symbol.get_str();
@@ -69,77 +67,6 @@ impl TryFrom<(Literal, Span)> for Value {
             LiteralKind::Float => Value::Float(symbol.parse().or(syntax_err!(Some(span), "Failed to parse float {}", symbol))?),
             LiteralKind::Bool => Value::Boolean(symbol.parse().or(syntax_err!(Some(span), "Failed to parse bool {}", symbol))?),
         })
-    }
-}
-
-impl Value {
-    pub fn iter<'a>(&'a self) -> Option<Box<dyn MLGIter + 'a>> {
-        match self {
-            Value::String(s) => Some(Box::from(CharIter {
-                index: 0,
-                string: s.clone()
-            })),
-            Value::IntRange(b, e) => Some(Box::from(RangeIter {
-                current: *b,
-                end: *e
-            })),
-            Value::List(l) => Some(Box::from(ListIter {
-                index: 0,
-                list: l
-            })),
-            Value::Filter(val, mat) => {
-                val.iter().map(|iter| {
-                    Box::from(FilterIter {
-                        iter,
-                        func: mat.clone()
-                    }) as Box<dyn MLGIter>
-                })
-            }
-            Value::Map(val, mat) => {
-                val.iter().map(|iter| {
-                    Box::from(MapIter {
-                        iter,
-                        func: mat.clone()
-                    }) as Box<dyn MLGIter>
-                })
-            }
-            _ => None,
-        }
-    }
-}
-
-/// Builtin functions
-#[derive(Debug, Clone)]
-pub enum Builtin {
-    Print,
-    Println,
-    Assert
-}
-
-impl Builtin {
-    pub fn execute(&self, value: Value, env: &mut Env) -> Result<Value, ExecutionError> {
-        match self {
-            Self::Print => {
-                env.print(format!("{}", value))?;
-                Ok(Value::None)
-            }
-            Self::Println => {
-                env.print(format!("{}\n", value))?;
-                Ok(Value::None)
-            }
-            Self::Assert => {
-                // TODO: Break execution and print error, rather than use rust's assert
-                match value {
-                    Value::Boolean(b) => {
-                        assert!(b)
-                    }
-                    _ => {
-                        assert!(false)
-                    }
-                }
-                Ok(Value::None)
-            }
-        }
     }
 }
 

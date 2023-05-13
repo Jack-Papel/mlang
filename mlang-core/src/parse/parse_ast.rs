@@ -22,7 +22,7 @@ pub fn find_end_of_block(tokens: &mut Tokens, block_indent: usize) -> usize {
     }
 }
 
-pub fn parse_block(tokens: &mut Tokens, block_indent: usize) -> Result<Block, CompilationError> {
+pub fn parse_block(tokens: &mut Tokens, block_indent: usize) -> Result<Block> {
     let mut statements = Vec::new();
     let end = find_end_of_block(&mut tokens.clone(), block_indent);
     let mut tokens = tokens.take(end);
@@ -50,7 +50,7 @@ pub fn parse_block(tokens: &mut Tokens, block_indent: usize) -> Result<Block, Co
     Ok(Block { statements })
 }
 
-pub fn parse_next_statement(tokens: &mut Tokens, current_indent: usize) -> Result<Statement, CompilationError> {
+pub fn parse_next_statement(tokens: &mut Tokens, current_indent: usize) -> Result<Statement> {
     match tokens.peek() {
         Some(Token(TokenKind::Keyword(symbol), ..)) if *symbol == *builtin_symbols::LET => {
             let ident = match tokens.peek_n(1) {

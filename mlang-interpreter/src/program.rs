@@ -1,8 +1,8 @@
 use crate::interpret::Executable;
-use crate::prelude::*;
 use crate::interpret::environment::Env;
-use crate::constructs::ast::AST;
-use crate::constructs::token::{Tokens, Token};
+
+use mlang::constructs::ast::AST;
+use mlang::constructs::token::{Tokens, Token};
 
 use self::error_handling::display_error;
 
@@ -30,9 +30,9 @@ impl Program<Unparsed> {
     }
 
     pub fn tokenize(self) -> Result<Program<Tokenized>, String> {
-        let tokens = match crate::tokenize::parse_tokens(&self.source) {
+        let tokens = match mlang::tokenize::parse_tokens(&self.source) {
             Ok(tokens) => tokens,
-            Err(e) => return Err(display_error(&self.source, MLGError::CompilationError(e)))
+            Err(e) => return Err(display_error(&self.source, e))
         };
 
         Ok(Program { 
@@ -53,9 +53,9 @@ impl Program<Unparsed> {
 impl Program<Tokenized> {
     pub fn parse(self) -> Result<Program<Parsed>, String> {
         let mut tokens = Tokens::new(&self.data);
-        let ast = match crate::parse::parse(&mut tokens) {
+        let ast = match mlang::parse::parse(&mut tokens) {
             Ok(ast) => ast,
-            Err(e) => return Err(display_error(&self.source, MLGError::CompilationError(e)))
+            Err(e) => return Err(display_error(&self.source, e))
         };
 
         Ok(Program { source: self.source, data: ast })
@@ -63,9 +63,9 @@ impl Program<Tokenized> {
 }
 impl Program<Parsed> {
     pub fn verify(self) -> Result<Program<Ready>, String> {
-        let ast = match crate::verify::verify(self.data) {
+        let ast = match mlang::verify::verify(self.data) {
             Ok(ast) => ast,
-            Err(e) => return Err(display_error(&self.source, MLGError::CompilationError(e)))
+            Err(e) => return Err(display_error(&self.source, e))
         };
 
         Ok(Program { source: self.source, data: ast })
@@ -82,20 +82,20 @@ impl Program<Ready> {
 
         match result {
             Ok(_) => Ok(output),
-            Err(e) => Err(display_error(&self.source, MLGError::ExecutionError(e)))
+            Err(e) => Err(e.to_string())
         }
     }
 }
 
 // Error prettifying code. (Warning: This sucks)
 pub(self) mod error_handling {
-    use crate::prelude::*;
-    use crate::constructs::token::span::Span;
+    use mlang::prelude::*;
+    use mlang::constructs::token::span::Span;
 
     pub fn display_error(input_string: &String, err: MLGError) -> String {
         match err {
-            MLGError::CompilationError(ref err @ CompilationError::SyntaxErr(Some(span), ..)) |
-            MLGError::CompilationError(ref err @ CompilationError::SemanticErr(Some(span), ..)) => {
+            ref err @ MLGError::SyntaxErr(Some(span), ..) |
+            ref err @ MLGError::SemanticErr(Some(span), ..) => {
                 let snippet = get_snippet(input_string, span);
                 format!("An error was found in the following code:\n{}\n       {}\n{}", 
                     snippet, 

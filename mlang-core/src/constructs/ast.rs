@@ -1,4 +1,5 @@
-use super::variable::{Builtin, Value, Type};
+use super::variable::{Value, Type};
+use crate::constructs::token::symbol::Symbol;
 
 pub struct AST(pub Block);
 
@@ -87,7 +88,7 @@ pub enum Function {
     Match {
         arms: Vec<MatchArm>,
     },
-    Builtin(Builtin)
+    Builtin(Symbol)
 }
 
 #[derive(Debug, Clone)]

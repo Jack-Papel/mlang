@@ -1,7 +1,7 @@
-use mlang::program::Program;
+use mlang_interpreter::program::Program;
 
 fn main() {
-    print!("\x1Bc"); // Clear terminal
+    // print!("\x1Bc"); // Clear terminal
 
     let source = std::fs::read_to_string("./test_files/test2.mlg").unwrap();
 

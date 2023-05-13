@@ -12,7 +12,7 @@ enum Parsing {
     Symbol,
 }
 
-pub fn parse_tokens<'a>(mlg_str: &str) -> Result<Vec<Token>, CompilationError> {
+pub fn parse_tokens<'a>(mlg_str: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
     let mut chars = mlg_str.chars().peekable();
 

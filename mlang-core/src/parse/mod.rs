@@ -6,6 +6,6 @@ use crate::constructs::ast::AST;
 use crate::constructs::token::Tokens;
 use crate::prelude::*;
 
-pub fn parse(tokens: &mut Tokens) -> Result<AST, CompilationError> {
+pub fn parse(tokens: &mut Tokens) -> Result<AST> {
     Ok(AST(parse_ast::parse_block(tokens, 0)?))
 }

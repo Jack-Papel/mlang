@@ -1,16 +1,20 @@
 use crate::prelude::*;
-use crate::constructs::variable::Value;
-use crate::constructs::ast::*;
+use mlang::constructs::variable::Value;
+use mlang::constructs::ast::*;
 
+pub mod iter;
+pub mod builtin;
 pub mod environment;
 use environment::Env;
 
+use builtin::{Iterable, Builtin};
+
 pub trait Executable {
-    fn execute(&self, env: &mut Env) -> Result<Value, ExecutionError>;
+    fn execute(&self, env: &mut Env) -> Result<Value>;
 }
 
 impl Executable for Expression {
-    fn execute(&self, env: &mut Env) -> Result<Value, ExecutionError> {
+    fn execute(&self, env: &mut Env) -> Result<Value> {
         match self {
             Expression::Literal(literal) => {
                 if let Value::Function(Function::Match { arms }) = literal {
@@ -246,16 +250,16 @@ impl Executable for Expression {
     }
 }
 
-pub fn call_function(value: &Value, function: &Function, env: &mut Env) -> Result<Value, ExecutionError> {
+pub fn call_function(value: &Value, function: &Function, env: &mut Env) -> Result<Value> {
     match function {
-        Function::Builtin(b) => b.execute(value.clone(), env),
+        Function::Builtin(b) => Builtin::from(b)?.execute(value.clone(), env),
         Function::Match { arms } => {
             get_result_from_match(value, arms, env)
         }
     }
 }
 
-fn get_result_from_match(value: &Value, arms: &Vec<MatchArm>, env: &mut Env) -> Result<Value, ExecutionError> {
+fn get_result_from_match(value: &Value, arms: &Vec<MatchArm>, env: &mut Env) -> Result<Value> {
     for arm in arms {
         let mut inner_env = env.new_child();
 
@@ -272,7 +276,7 @@ fn get_result_from_match(value: &Value, arms: &Vec<MatchArm>, env: &mut Env) -> 
     Ok(Value::None)
 }
 
-fn matches(value: &Value, arm: &MatchArm, inner_env: &mut Env) -> Result<bool, ExecutionError> {
+fn matches(value: &Value, arm: &MatchArm, inner_env: &mut Env) -> Result<bool> {
     // Match pattern
     if let Some(ident) = &arm.pattern.identifier {
         if let Some(typ) = &arm.pattern.typ {
@@ -296,7 +300,7 @@ fn matches(value: &Value, arm: &MatchArm, inner_env: &mut Env) -> Result<bool, E
 }
 
 impl Executable for Block {
-    fn execute(&self, env: &mut Env) -> Result<Value, ExecutionError> {
+    fn execute(&self, env: &mut Env) -> Result<Value> {
         for (idx, statement) in self.statements.iter().enumerate() {
             if idx == self.statements.len() - 1 {
                 return statement.execute(env);
@@ -328,7 +332,7 @@ impl Executable for Block {
 }
 
 impl Executable for Statement {
-    fn execute(&self, env: &mut Env) -> Result<Value, ExecutionError> {
+    fn execute(&self, env: &mut Env) -> Result<Value> {
         match self {
             Statement::Expression(expression) => expression.execute(env),
             Statement::Let(identifier, expression) => {

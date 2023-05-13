@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
-use crate::constructs::variable::{Value, Builtin}; 
-use crate::constructs::ast::Function;
+use mlang::constructs::token::symbol::builtin_symbols;
+use mlang::constructs::variable::Value; 
+use mlang::constructs::ast::Function;
+
 use crate::prelude::*;
 
 pub struct Env<'a> {
@@ -15,9 +17,9 @@ impl<'a> Env<'a> {
     pub fn new() -> Env<'a> {
         let mut ident_map = HashMap::new();
         // Special values
-        ident_map.insert("print".to_string(), Value::Function(Function::Builtin(Builtin::Print)));
-        ident_map.insert("println".to_string(), Value::Function(Function::Builtin(Builtin::Println)));
-        ident_map.insert("assert".to_string(), Value::Function(Function::Builtin(Builtin::Assert)));
+        ident_map.insert("print".to_string(), Value::Function(Function::Builtin(*builtin_symbols::PRINT)));
+        ident_map.insert("println".to_string(), Value::Function(Function::Builtin(*builtin_symbols::PRINTLN)));
+        ident_map.insert("assert".to_string(), Value::Function(Function::Builtin(*builtin_symbols::ASSERT)));
         Env {
             ident_map,
             parent: None,
@@ -43,7 +45,7 @@ impl<'a> Env<'a> {
         }
     }
 
-    pub(super) fn get_ident(&self, name: String) -> Result<&Value, ExecutionError> {
+    pub(super) fn get_ident(&self, name: String) -> Result<&Value> {
         match self.ident_map.get(&name) {
             Some(value) => Ok(value),
             None => match self.parent {
@@ -71,7 +73,7 @@ impl<'a> Env<'a> {
         self.ident_map.insert(name, value);
     }
 
-    pub fn print(&mut self, text: String) -> Result<(), ExecutionError> {
+    pub fn print(&mut self, text: String) -> Result<()> {
         if let Some(output) = &mut self.output {
             output.push_str(&text);
         } else if let Some(parent) = self.parent {

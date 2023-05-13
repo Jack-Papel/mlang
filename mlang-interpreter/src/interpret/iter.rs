@@ -1,11 +1,13 @@
+use mlang::constructs::variable::Value;
+use mlang::constructs::ast::Function;
+
 use crate::prelude::*;
-use super::variable::Value;
-use super::ast::Function;
-use crate::interpret::environment::Env;
-use crate::interpret::call_function;
+
+use super::environment::Env;
+use super::call_function;
 
 pub trait MLGIter {
-    fn next(&mut self, env: &mut Env) -> Result<Option<Value>, ExecutionError>;
+    fn next(&mut self, env: &mut Env) -> Result<Option<Value>>;
 }
 
 #[derive(Clone)]
@@ -15,7 +17,7 @@ pub struct RangeIter {
 }
 
 impl MLGIter for RangeIter {
-    fn next(&mut self, _: &mut Env) -> Result<Option<Value>, ExecutionError> {
+    fn next(&mut self, _: &mut Env) -> Result<Option<Value>> {
         if self.current < self.end {
             self.current += 1;
             Ok(Some(Value::Int(self.current - 1)))
@@ -32,7 +34,7 @@ pub struct CharIter {
 }
 
 impl MLGIter for CharIter {
-    fn next(&mut self, _env: &mut Env) -> Result<Option<Value>, ExecutionError> {
+    fn next(&mut self, _env: &mut Env) -> Result<Option<Value>> {
         if let Some(char) = self.string.chars().nth(self.index) {
             self.index += 1;
             Ok(Some(Value::String(char.to_string())))
@@ -48,7 +50,7 @@ pub struct ListIter<'a> {
 }
 
 impl MLGIter for ListIter<'_> {
-    fn next(&mut self, _env: &mut Env) -> Result<Option<Value>, ExecutionError> {
+    fn next(&mut self, _env: &mut Env) -> Result<Option<Value>> {
         if let Some(val) = self.list.get(self.index) {
             self.index += 1;
             Ok(Some(val.clone()))
@@ -64,7 +66,7 @@ pub struct FilterIter<'a> {
 }
 
 impl MLGIter for FilterIter<'_> {
-    fn next(&mut self, env: &mut Env) -> Result<Option<Value>, ExecutionError> {
+    fn next(&mut self, env: &mut Env) -> Result<Option<Value>> {
         while let Some(val) = self.iter.next(env)? {
             if let Value::Boolean(bl) = call_function(&val, &self.func, env)? {
                 if bl {
@@ -94,7 +96,7 @@ pub struct MapIter<'a> {
 }
 
 impl MLGIter for MapIter<'_> {
-    fn next(&mut self, env: &mut Env) -> Result<Option<Value>, ExecutionError> {
+    fn next(&mut self, env: &mut Env) -> Result<Option<Value>> {
         if let Some(val) = self.iter.next(env)? {
             Ok(Some(call_function(&val, &self.func, env)?))
         } else {

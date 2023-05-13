@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use lazy_static::lazy_static;
 
 type SymbolIndex = u8;
@@ -22,6 +24,12 @@ impl Drop for SymbolPool {
 }
 
 unsafe impl Sync for SymbolPool {}
+
+impl Display for Symbol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.get_str())
+    }
+}
 
 impl Symbol {
     pub fn from(str: &str) -> Self {
