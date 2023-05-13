@@ -12,7 +12,7 @@ enum Parsing {
     Symbol,
 }
 
-pub fn parse_tokens<'a>(mlg_str: &str) -> Result<Vec<Token>> {
+pub fn parse_tokens<'a>(mlg_str: &str) -> Result<Vec<Token>, CompilationError> {
     let mut tokens = Vec::new();
     let mut chars = mlg_str.chars().peekable();
 
@@ -44,8 +44,8 @@ pub fn parse_tokens<'a>(mlg_str: &str) -> Result<Vec<Token>> {
                             symbol: Symbol::from(buf.as_str())
                         }), 
                         Span {
-                            index: index - buf.len() as u32,
-                            len: buf.len() as u16
+                            index: index.saturating_sub(buf.len() as u32 + 1),
+                            len: buf.len() as u16 + 2 // +2 to include the "quotation marks"
                         }
                     ));
                     buf.clear();
@@ -241,8 +241,8 @@ pub fn parse_tokens<'a>(mlg_str: &str) -> Result<Vec<Token>> {
 
     match currently_parsing {
         Parsing::String => return syntax_err!(Some(Span { 
-            index: (mlg_str.len() - buf.len()) as u32,
-            len: buf.len() as u16
+            index: (mlg_str.len().saturating_sub(buf.len() + 1)) as u32,
+            len: buf.len() as u16 + 1
         }), "Unterminated string: {}", buf),
         Parsing::Number => {
             tokens.push(Token(

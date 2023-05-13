@@ -69,7 +69,7 @@ pub struct Literal {
 }
 
 impl TokenKind {
-    pub fn as_binary_operator(&self, span: Option<Span>) -> Result<BinaryOperator> {
+    pub fn as_binary_operator(&self, span: Option<Span>) -> Result<BinaryOperator, CompilationError> {
         match self {
             TokenKind::DotDot => Ok(BinaryOperator::Range),
             TokenKind::Dollar => Ok(BinaryOperator::ForEach),
@@ -94,7 +94,7 @@ impl TokenKind {
         }
     }
 
-    pub(in super::super) fn as_unary_operator(&self, span: Option<Span>) -> Result<UnaryOperator> {
+    pub(in super::super) fn as_unary_operator(&self, span: Option<Span>) -> Result<UnaryOperator, CompilationError> {
         match self {
             TokenKind::Minus => Ok(UnaryOperator::Minus),
             TokenKind::Exclamation => Ok(UnaryOperator::Not),

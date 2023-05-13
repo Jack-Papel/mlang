@@ -1,4 +1,8 @@
-use super::{variable::{Builtin, Value, Type}};
+use super::variable::{Builtin, Value, Type};
+
+pub struct AST {
+    pub block: Block
+}
 
 #[derive(Debug, Clone)]
 pub struct Identifier {

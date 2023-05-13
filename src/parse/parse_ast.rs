@@ -2,15 +2,8 @@ use crate::constructs::token::span::Span;
 use crate::constructs::token::symbol::builtin_symbols;
 use crate::prelude::*;
 use crate::constructs::ast::*;
-use crate::constructs::program::UnverifiedProgram;
 use crate::constructs::token::{TokenKind, Token, Tokens};
 use super::parse_expr::parse_next_expression;
-
-pub fn to_ast(tokens: &mut Tokens) -> Result<UnverifiedProgram> {
-    Ok(UnverifiedProgram { 
-        block: parse_block(tokens, 0)? 
-    })
-}
 
 pub fn find_end_of_block(tokens: &mut Tokens, block_indent: usize) -> usize {
     let mut length = 0;
@@ -29,7 +22,7 @@ pub fn find_end_of_block(tokens: &mut Tokens, block_indent: usize) -> usize {
     }
 }
 
-pub fn parse_block(tokens: &mut Tokens, block_indent: usize) -> Result<Block> {
+pub fn parse_block(tokens: &mut Tokens, block_indent: usize) -> Result<Block, CompilationError> {
     let mut statements = Vec::new();
     let end = find_end_of_block(&mut tokens.clone(), block_indent);
     let mut tokens = tokens.take(end);
@@ -57,7 +50,7 @@ pub fn parse_block(tokens: &mut Tokens, block_indent: usize) -> Result<Block> {
     Ok(Block { statements })
 }
 
-pub fn parse_next_statement(tokens: &mut Tokens, current_indent: usize) -> Result<Statement> {
+pub fn parse_next_statement(tokens: &mut Tokens, current_indent: usize) -> Result<Statement, CompilationError> {
     match tokens.peek() {
         Some(Token(TokenKind::Keyword(symbol), ..)) if *symbol == *builtin_symbols::LET => {
             let ident = match tokens.peek_n(1) {

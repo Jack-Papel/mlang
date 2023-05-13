@@ -21,7 +21,7 @@ impl ExpressionFragment {
     }
 }
 
-pub fn parse_next_expression(tokens: &mut Tokens, current_indent: usize) -> Result<Expression> {
+pub fn parse_next_expression(tokens: &mut Tokens, current_indent: usize) -> Result<Expression, CompilationError> {
     let current_indent = if let Some(Token(TokenKind::Newline(indent), ..)) = tokens.peek() {
         let indent = *indent;
         tokens.next();
@@ -106,7 +106,7 @@ fn find_end_of_expression(tokens: &mut Tokens, env_indent: usize) -> usize {
     }
 }
 
-fn evaluate_fragments_on_match_statements(atoms: &mut Vec<ExpressionFragment>) -> Result<()> {
+fn evaluate_fragments_on_match_statements(atoms: &mut Vec<ExpressionFragment>) -> Result<(), CompilationError> {
     // First, find if there is a BAR token, and if so, evaluate the rest of the tokens into a match expression
     if let Some((idx, ExpressionFragment::Unparsed(Token(TokenKind::Bar(indent), span)))) = atoms.iter().enumerate().find(|(_, partial)|
         matches!(partial, ExpressionFragment::Unparsed(Token(TokenKind::Bar(_), ..)))
@@ -130,7 +130,7 @@ fn evaluate_fragments_on_match_statements(atoms: &mut Vec<ExpressionFragment>) -
     Ok(())
 }
 
-fn evaluate_fragments_in_parentheses(atoms: &mut Vec<ExpressionFragment>, current_indent: usize) -> Result<()> {
+fn evaluate_fragments_in_parentheses(atoms: &mut Vec<ExpressionFragment>, current_indent: usize) -> Result<(), CompilationError> {
     let mut depth = 0;
     while let Some((left_idx, token)) = atoms.iter().enumerate().find(|(_, partial)| {
         match partial {
@@ -201,7 +201,7 @@ fn evaluate_fragments_in_parentheses(atoms: &mut Vec<ExpressionFragment>, curren
     Ok(())
 }
 
-fn apply_unary_operator_if_present(atoms: &mut Vec<ExpressionFragment>) -> Result<()> {
+fn apply_unary_operator_if_present(atoms: &mut Vec<ExpressionFragment>) -> Result<(), CompilationError> {
     if let Some(ExpressionFragment::Unparsed(token)) = atoms.get(0) {
         if let Ok(op) = token.0.as_unary_operator(Some(token.1)) {
             let first_span = token.1.clone();
@@ -220,7 +220,7 @@ fn apply_unary_operator_if_present(atoms: &mut Vec<ExpressionFragment>) -> Resul
     Ok(())
 } 
 
-fn evaluate_fragments_on_binary_operators(atoms: &mut Vec<ExpressionFragment>) -> Result<()> {
+fn evaluate_fragments_on_binary_operators(atoms: &mut Vec<ExpressionFragment>) -> Result<(), CompilationError> {
     for ops in BinaryOperator::get_precedence_map() {
         while let Some((op_idx, ExpressionFragment::Unparsed(token))) = atoms.iter().enumerate().find(|(_, partial)| {
             if let ExpressionFragment::Unparsed(token) = partial {
@@ -247,7 +247,7 @@ fn evaluate_fragments_on_binary_operators(atoms: &mut Vec<ExpressionFragment>) -
 }
 
 
-fn get_binary_operands(atoms: &[ExpressionFragment], idx: usize) -> Result<(Expression, Expression)> {
+fn get_binary_operands(atoms: &[ExpressionFragment], idx: usize) -> Result<(Expression, Expression), CompilationError> {
     let left = match &atoms.get(idx - 1) {
         Some(ExpressionFragment::Parsed(expr, ..)) => expr.clone(),
         Some(ExpressionFragment::Unparsed(token)) => parse_single_token(token)?,
@@ -264,7 +264,7 @@ fn get_binary_operands(atoms: &[ExpressionFragment], idx: usize) -> Result<(Expr
 }
 
 #[allow(unused_variables)]
-fn evaluate_fragments_on_calls(atoms: &mut Vec<ExpressionFragment>) -> Result<()> {
+fn evaluate_fragments_on_calls(atoms: &mut Vec<ExpressionFragment>) -> Result<(), CompilationError> {
     while let Some((idx, [
             ExpressionFragment::Parsed(expr1, span1), 
             ExpressionFragment::Parsed(expr2, span2)
@@ -279,7 +279,7 @@ fn evaluate_fragments_on_calls(atoms: &mut Vec<ExpressionFragment>) -> Result<()
     Ok(())
 }
 
-pub fn parse_single_token(token: &Token) -> Result<Expression> {
+pub fn parse_single_token(token: &Token) -> Result<Expression, CompilationError> {
     match token.0 {
         TokenKind::Identifier(ident) => Ok(Expression::Identifier(Identifier { name: ident.get_str().to_string() })),
         TokenKind::Literal(lit) => Ok(Expression::Literal(Value::try_from((lit, token.1))?)),

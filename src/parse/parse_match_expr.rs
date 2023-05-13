@@ -6,7 +6,7 @@ use crate::constructs::ast::*;
 use crate::constructs::variable::*;
 
 #[allow(unused_variables)]
-pub fn parse_match_expression(tokens: &mut Tokens, current_indent: usize) -> Result<Expression> {
+pub fn parse_match_expression(tokens: &mut Tokens, current_indent: usize) -> Result<Expression, CompilationError> {
     let mut arms = vec![];
 
     loop {
@@ -58,7 +58,7 @@ pub fn parse_match_expression(tokens: &mut Tokens, current_indent: usize) -> Res
     })))
 }
 
-fn parse_pattern(tokens: &mut Tokens) -> Result<Pattern> {
+fn parse_pattern(tokens: &mut Tokens) -> Result<Pattern, CompilationError> {
     if let Some((idx, _)) = tokens.clone().enumerate().find(|(_, token)| {
         matches!(token, Token(TokenKind::Tilde, ..))
     }) {

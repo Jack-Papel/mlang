@@ -3,7 +3,7 @@ use super::ast::Function;
 use super::iter::{MLGIter, FilterIter, MapIter, RangeIter, ListIter, CharIter};
 use super::token::span::Span;
 use super::token::{Literal, LiteralKind};
-use crate::interpret::execution::Env;
+use crate::interpret::environment::Env;
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -58,7 +58,7 @@ pub enum Value {
 }
 
 impl TryFrom<(Literal, Span)> for Value {
-    type Error = MLGErr;
+    type Error = CompilationError;
 
     fn try_from((lit, span): (Literal, Span)) -> std::result::Result<Self, Self::Error> {
         let symbol = lit.symbol.get_str();
@@ -117,7 +117,7 @@ pub enum Builtin {
 }
 
 impl Builtin {
-    pub fn execute(&self, value: Value, env: &mut Env) -> Result<Value> {
+    pub fn execute(&self, value: Value, env: &mut Env) -> Result<Value, ExecutionError> {
         match self {
             Self::Print => {
                 env.print(format!("{}", value))?;

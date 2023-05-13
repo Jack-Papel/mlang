@@ -38,4 +38,16 @@ impl Span {
             len: 1
         }
     }
+
+    pub fn beginning(&self) -> usize {
+        self.index as usize
+    }
+
+    pub fn ending(&self) -> usize {
+        self.index.saturating_add(self.len as u32).saturating_sub(1) as usize
+    }
+
+    pub fn length(&self) -> usize {
+        self.len as usize
+    }
 }
