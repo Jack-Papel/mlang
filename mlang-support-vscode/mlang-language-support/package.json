@@ -1,0 +1,25 @@
+{
+  "name": "mlang-language-support",
+  "displayName": "MLANG Language Support",
+  "description": "MLANG Language Support for VSCode",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.78.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "mlang",
+      "aliases": ["MLang", "mlang"],
+      "extensions": ["mlg","mlang"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "mlang",
+      "scopeName": "source.mlang",
+      "path": "./syntaxes/mlang.tmLanguage.json"
+    }]
+  }
+}

@@ -1,0 +1,41 @@
+{
+	"scopeName": "source.mlang",
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "MLang",
+	"patterns": [{
+		"include": "#keywords"
+	}, {
+		"include": "#strings"
+	}, {
+		"include": "#variables"
+	}],
+	"repository": {
+		"variables": {
+			"patterns": [{
+				"name": "entity.name",
+				"match": "\b([a-z]|[A-Z]|_)*\b"
+			}, {
+				"name": "entity.name.function",
+				"match": "\b([a-z]|[A-Z]|_)*\b *("
+			}]
+		},
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.mlang",
+				"match": "(\blet\b)|$|#|@"
+			}, {
+				"name": "keyword.operator.arithmetic.mlang",
+				"match": "+|-|*|/|%"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.mlang",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [{
+				"name": "constant.character.escape.mlang",
+				"match": "\\\\n"
+			}]
+		}
+	}
+}
