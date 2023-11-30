@@ -120,7 +120,7 @@ fn evaluate_fragments_on_match_statements(atoms: &mut Vec<ExpressionFragment>) -
             }).collect()
         ), *indent)?;
 
-        let span = span.clone();
+        let span = *span;
 
         atoms.truncate(idx);
 
@@ -204,7 +204,7 @@ fn evaluate_fragments_in_parentheses(atoms: &mut Vec<ExpressionFragment>, curren
 fn apply_unary_operator_if_present(atoms: &mut Vec<ExpressionFragment>) -> Result<()> {
     if let Some(ExpressionFragment::Unparsed(token)) = atoms.get(0) {
         if let Ok(op) = token.0.as_unary_operator(Some(token.1)) {
-            let first_span = token.1.clone();
+            let first_span = token.1;
             atoms.remove(0);
             if let Some(ExpressionFragment::Parsed(expr, span)) = atoms.get(0) {
                 atoms[0] = ExpressionFragment::Parsed(Expression::Unary(

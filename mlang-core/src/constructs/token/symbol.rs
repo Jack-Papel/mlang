@@ -9,7 +9,7 @@ pub struct Symbol(SymbolIndex);
 
 struct SymbolPool([*const str; 256]);
 
-static mut SYMBOL_POOL: SymbolPool = SymbolPool([std::ptr::slice_from_raw_parts::<u8>(std::ptr::null(), 0) as *const str; 256]);
+static mut SYMBOL_POOL: SymbolPool = SymbolPool([std::ptr::slice_from_raw_parts::<u8>(core::ptr::NonNull::dangling().as_ptr(), 0) as *const str; 256]);
 static mut POOL_SIZE: SymbolIndex = 0;
 
 impl Drop for SymbolPool {
@@ -33,13 +33,13 @@ impl Display for Symbol {
 
 impl Symbol {
     pub fn from(str: &str) -> Self {
-        if unsafe { INITIALIZED_BUILTINS } == false {
+        if !unsafe { INITIALIZED_BUILTINS } {
             let _ = BUILTIN_SYMBOLS; // touch, to initialize builtins.
             unsafe { INITIALIZED_BUILTINS = true };
         }
 
         match (0..unsafe { POOL_SIZE }).find(|&idx| {str == Symbol(idx).get_str()}) {
-            Some(idx) => Self(idx as u8),
+            Some(idx) => Self(idx),
             None => Self::intern(str)
         }
     }

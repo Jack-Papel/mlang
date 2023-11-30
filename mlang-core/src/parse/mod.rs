@@ -1,6 +1,6 @@
-pub(self) mod parse_ast;
-pub(self) mod parse_expr;
-pub(self) mod parse_match_expr;
+mod parse_ast;
+mod parse_expr;
+mod parse_match_expr;
 
 use crate::constructs::ast::AST;
 use crate::constructs::token::Tokens;

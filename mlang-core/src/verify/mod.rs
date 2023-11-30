@@ -7,5 +7,5 @@ pub fn verify(ast: AST) -> Result<AST> {
     // etc.
 
     // Temporary
-    return Ok(ast)
+    Ok(ast)
 }

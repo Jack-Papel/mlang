@@ -75,7 +75,7 @@ impl Program<Parsed> {
 impl Program<Ready> {
     pub fn run(&self) -> Result<String, String> {
         let mut output = String::new();
-        let mut env = Env::new();
+        let mut env = Env::default();
         let result = self.data.0.execute(&mut env);
 
         env.write_to_string(&mut output);
@@ -88,7 +88,7 @@ impl Program<Ready> {
 }
 
 // Error prettifying code. (Warning: This sucks)
-pub(self) mod error_handling {
+mod error_handling {
     use mlang::prelude::*;
     use mlang::constructs::token::span::Span;
 
@@ -107,7 +107,7 @@ pub(self) mod error_handling {
         }
     }
 
-    fn line_number(input: &String, index: usize) -> usize {
+    fn line_number(input: &str, index: usize) -> usize {
         // Count the newlines before the given index
         1 + input.chars()
             .take(index)
@@ -115,7 +115,7 @@ pub(self) mod error_handling {
             .count()
     }
 
-    fn get_snippet(input: &String, span: Span) -> String {
+    fn get_snippet(input: &str, span: Span) -> String {
         let line_span = {
             let beginning_line = line_number(input, span.beginning());
             Span {
@@ -143,7 +143,7 @@ pub(self) mod error_handling {
             .enumerate()
             .take(span.beginning())
             .rev()
-            .find(|(_, &chr)| chr == '\n' as u8) 
+            .find(|(_, &chr)| chr as char == '\n') 
         {
             line_start_index = index + 1; // Line starts AFTER the newline
         } else {
@@ -152,6 +152,6 @@ pub(self) mod error_handling {
         
         let blank_space_length = span.beginning() - line_start_index;
     
-        return " ".repeat(blank_space_length) + &"^".repeat(span.length());
+        " ".repeat(blank_space_length) + &"^".repeat(span.length())
     }
 }

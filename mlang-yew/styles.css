@@ -1,0 +1,98 @@
+#about {
+    background-color: var(--primary);
+}
+
+body {
+    height: 100lvh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+#playground {
+    background-color: var(--background);
+    color: var(--primary);
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#playground > nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding: 1rem;
+}
+
+#playground button {
+    width: 3rem;
+    height: 2rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: var(--secondary)
+}
+
+.split {
+    width: 80%;
+    margin: auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-grow: 1;
+    flex-wrap: wrap;
+}
+
+.split > div {
+    display: flex;
+    flex-direction: column;
+    width: 46%;
+    background-color: var(--secondary);
+    border-radius: 1rem;
+    color: var(--primary);
+    margin: 1rem;
+    margin-top: 0;
+    flex-grow: 1;
+    min-height: 30rem;
+}
+
+.split > div > label {
+    padding: 0.5rem;
+    padding-left: 1rem;
+}
+
+textarea {
+    font-family: 'Cousine', monospace;
+    background-color: var(--primary);
+    color: var(--background);
+    border: none;
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+    padding: 1rem;
+    resize: none;
+    height: 100%;
+    white-space: pre;
+    overflow: scroll;
+    overflow-wrap: normal;
+}
+
+textarea[error] {
+    color: var(--secondary);
+}
+
+textarea[error=true] {
+    outline: 0.25rem solid var(--secondary);
+    outline-offset: -0.25rem;
+}
+
+@media only screen and (max-width: 600px) {
+    .split {
+        width: unset;
+        padding: 1rem;
+        padding-top: 0;
+    }
+}

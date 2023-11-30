@@ -12,7 +12,7 @@ enum Parsing {
     Symbol,
 }
 
-pub fn parse_tokens<'a>(mlg_str: &str) -> Result<Vec<Token>> {
+pub fn parse_tokens(mlg_str: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
     let mut chars = mlg_str.chars().peekable();
 
@@ -208,7 +208,7 @@ pub fn parse_tokens<'a>(mlg_str: &str) -> Result<Vec<Token>> {
                 }
                 ' ' => {
                     if let Some(Token(TokenKind::Newline(_), Span{index: newline_start, ..})) = tokens.last() {
-                        let newline_start = newline_start.clone();
+                        let newline_start = *newline_start;
                         tokens.pop();
                         tokens.push(Token(
                             TokenKind::Newline(indent - 1), 
@@ -280,8 +280,8 @@ pub fn parse_tokens<'a>(mlg_str: &str) -> Result<Vec<Token>> {
     Ok(tokens)
 }
 
-fn get_kind_from_symbol_string(buf: &String) -> TokenKind {
-    match buf.as_str() {
+fn get_kind_from_symbol_string(buf: &str) -> TokenKind {
+    match buf {
         "let" => TokenKind::Keyword(*builtin_symbols::LET),
         "struct" => TokenKind::Keyword(*builtin_symbols::STRUCT),
         "impl" => TokenKind::Keyword(*builtin_symbols::IMPL),
@@ -289,6 +289,6 @@ fn get_kind_from_symbol_string(buf: &String) -> TokenKind {
         "true" => TokenKind::Literal(Literal {kind: LiteralKind::Bool, symbol: *builtin_symbols::TRUE}),
         "false" => TokenKind::Literal(Literal {kind: LiteralKind::Bool, symbol: *builtin_symbols::FALSE}),
         "yield" => TokenKind::Keyword(*builtin_symbols::YIELD),
-        _ => TokenKind::Identifier(Symbol::from(buf.as_str()))
+        _ => TokenKind::Identifier(Symbol::from(buf))
     }
 }

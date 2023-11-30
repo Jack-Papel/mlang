@@ -36,7 +36,7 @@ impl<'a> Iterator for Tokens<'a> {
 impl<'a> Tokens<'a> {
     pub fn new(tokens: &Vec<Token>) -> Tokens {
         Tokens {
-            tokens: &tokens,
+            tokens,
             index: 0,
             end: tokens.len(),
         }

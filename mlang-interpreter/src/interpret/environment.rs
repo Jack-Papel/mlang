@@ -13,8 +13,8 @@ pub struct Env<'a> {
     output: Option<String>
 }
 
-impl<'a> Env<'a> {
-    pub fn new() -> Env<'a> {
+impl<'a> Default for Env<'a> {
+    fn default() -> Env<'a> {
         let mut ident_map = HashMap::new();
         // Special values
         ident_map.insert("print".to_string(), Value::Function(Function::Builtin(*builtin_symbols::PRINT)));
@@ -27,7 +27,9 @@ impl<'a> Env<'a> {
             output: Some(String::new())
         }
     }
+}
 
+impl<'a> Env<'a> {
     pub(super) fn set_break(&mut self) {
         self.break_flag = true;
     }
