@@ -38,13 +38,10 @@ impl Builtin {
                 Ok(Value::None)
             }
             Self::Assert => {
-                // TODO: Break execution and print error, rather than use rust's assert
                 match value {
-                    Value::Boolean(b) => {
-                        assert!(b)
-                    }
+                    Value::Boolean(b) if b => {}
                     _ => {
-                        assert!(false)
+                        return Err(ExecutionError("Assertion failed!".to_string()))
                     }
                 }
                 Ok(Value::None)
